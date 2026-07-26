@@ -96,6 +96,7 @@ go work init ./genesis-sandbox ./genesis-sandbox-client-go
 
 - `main` 分支 push / PR 会触发 `ci`，执行 `go test ./...`
 - 推送形如 `v0.1.0` 的 tag 会触发 `release`，先验证再创建 GitHub Release
+- release 会附带源码压缩包与 `.sha256` 校验文件
 - 如需补发已存在 tag，可手动触发 workflow，并传入 `tag`
 
 ## 示例

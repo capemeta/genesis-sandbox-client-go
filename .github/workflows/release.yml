@@ -50,6 +50,16 @@ jobs:
           fi
           echo "tag=${tag}" >> "${GITHUB_OUTPUT}"
 
+      - name: Create release bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="${{ steps.meta.outputs.tag }}"
+          mkdir -p dist
+          archive="dist/genesis-sandbox-client-go-${tag}.tar.gz"
+          git archive --format=tar.gz --prefix="genesis-sandbox-client-go-${tag}/" -o "${archive}" HEAD
+          sha256sum "${archive}" > "${archive}.sha256"
+
       - name: Generate release notes
         id: notes
         shell: bash
@@ -68,6 +78,11 @@ jobs:
             echo
             echo "- go test ./..."
             echo
+            echo "## Artifacts"
+            echo
+            echo "- Source archive: \`genesis-sandbox-client-go-${tag}.tar.gz\`"
+            echo "- SHA256: \`genesis-sandbox-client-go-${tag}.tar.gz.sha256\`"
+            echo
             echo "Tag: \`${tag}\`"
             echo "EOF"
           } >> "${GITHUB_OUTPUT}"
@@ -78,3 +93,6 @@ jobs:
           tag_name: ${{ steps.meta.outputs.tag }}
           generate_release_notes: true
           body: ${{ steps.notes.outputs.body }}
+          files: |
+            dist/*.tar.gz
+            dist/*.sha256
