@@ -92,6 +92,12 @@ go work init ./genesis-sandbox ./genesis-sandbox-client-go
 - 本地跑起来的 `genesis-sandbox` 服务仍然是独立源码仓库
 - 不需要在仓库内提交 `replace ../genesis-sandbox-client-go`
 
+## CI / Release
+
+- `main` 分支 push / PR 会触发 `ci`，执行 `go test ./...`
+- 推送形如 `v0.1.0` 的 tag 会触发 `release`，先验证再创建 GitHub Release
+- 如需补发已存在 tag，可手动触发 workflow，并传入 `tag`
+
 ## 示例
 
 - `examples/quickstart`: 推荐入口，包含 Session、文件、异步执行、Suspend/Resume
