@@ -122,7 +122,7 @@ func (h *ExecHandle) WaitWithOptions(ctx context.Context, opts WaitExecOptions) 
 			return nil, fmt.Errorf("ExecHandle.Wait: %w", err)
 		}
 		switch record.Status {
-		case "succeeded", "failed", "cancelled", "timed_out":
+		case "succeeded", "failed", "cancelled", "timed_out", "interrupted":
 			return &ExecResult{
 				ExitCode:        record.ExitCode,
 				Stdout:          record.Stdout,
@@ -318,7 +318,7 @@ func normalizeExecLanguage(lang string) string {
 
 func isTerminalJobStatus(status string) bool {
 	switch status {
-	case "succeeded", "failed", "cancelled", "timed_out":
+	case "succeeded", "failed", "cancelled", "timed_out", "interrupted":
 		return true
 	default:
 		return false

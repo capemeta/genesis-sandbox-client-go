@@ -64,6 +64,17 @@ fmt.Print(result.Stdout)
 如果你希望完全零配置，也可以直接 `sandbox.New(client)`，由服务端按默认 Public Profile 解析；
 只有在你明确想绑定某个部署内 profile 名时，才建议使用 `WithProfile(...)`。
 
+## 端点与凭据安全约束
+
+与其他兄弟 SDK 保持一致的端点纪律：
+
+- `BaseURL` 必须是绝对 HTTP(S) 地址，且不含内嵌凭据、查询、片段或路径前缀
+- 非 HTTPS 的 `BaseURL` 仅允许回环地址（`localhost` / `127.0.0.1` / `::1`），用于本地联调
+- `Token` 拒绝首尾空白与 CR/LF，避免 Authorization 头注入
+- 默认 HTTP 客户端拒绝跟随重定向（3xx 按结构化 `APIError` 返回），Bearer 只发往配置的 `BaseURL`；
+  自定义 `Config.HTTPClient` 的调用方需自行保证相同的重定向纪律
+- JSON 响应解码受 16 MiB 预算约束，异常服务端无法耗尽客户端内存
+
 ## 术语约定
 
 - `profile`：显式环境名，例如 `code-polyglot-basic`、`office-basic`。只有在你明确要绑定某个部署内环境时才直接指定。

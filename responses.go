@@ -73,7 +73,7 @@ type SandboxLease struct {
 	Status               string                `json:"status"`
 	CreatedAt            time.Time             `json:"created_at"`
 	ExpiresAt            time.Time             `json:"expires_at"`
-	EffectivePolicy      interface{}           `json:"effective_policy"`
+	EffectivePolicy      any                   `json:"effective_policy"`
 	EffectiveEnvironment *EffectiveEnvironment `json:"effective_environment,omitempty"`
 	Metadata             map[string]string     `json:"metadata,omitempty"`
 	ResourceVersion      int64                 `json:"resource_version"`

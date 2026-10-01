@@ -32,6 +32,32 @@ type Config struct {
 // server responds 304 Not Modified; the cached representation is still valid.
 var ErrNotModified = errors.New("not modified")
 
+// loopbackHosts are the only hosts allowed to use plain http, matching the
+// Platform endpoint constraints enforced by the sibling SDKs.
+var loopbackHosts = map[string]bool{
+	"localhost": true,
+	"127.0.0.1": true,
+	"::1":       true,
+}
+
+// maxJSONResponseBytes caps JSON decoding so a misbehaving server cannot
+// exhaust client memory. It is a variable so tests can tighten it.
+var maxJSONResponseBytes int64 = 16 << 20
+
+func decodeJSONLimited(body io.Reader, target any) error {
+	data, err := io.ReadAll(io.LimitReader(body, maxJSONResponseBytes+1))
+	if err != nil {
+		return fmt.Errorf("read response: %w", err)
+	}
+	if int64(len(data)) > maxJSONResponseBytes {
+		return fmt.Errorf("sandbox client: JSON response exceeds %d byte budget", maxJSONResponseBytes)
+	}
+	if err := json.Unmarshal(data, target); err != nil {
+		return fmt.Errorf("decode response: %w", err)
+	}
+	return nil
+}
+
 // APIError is a structured error returned by the Sandbox Service.
 type APIError struct {
 	StatusCode int
@@ -137,6 +163,22 @@ func NewClient(cfg Config) (*Client, error) {
 	if err != nil || parsed.Scheme == "" || parsed.Host == "" || (parsed.Scheme != "http" && parsed.Scheme != "https") {
 		return nil, fmt.Errorf("sandbox client: BaseURL must be an absolute http(s) URL")
 	}
+	// 与 Platform 端点约束一致：拒绝内嵌凭据、查询、片段与路径前缀。
+	if parsed.User != nil || parsed.RawQuery != "" || parsed.Fragment != "" {
+		return nil, fmt.Errorf("sandbox client: BaseURL must not contain credentials, query, or fragment")
+	}
+	if parsed.Path != "" && parsed.Path != "/" {
+		return nil, fmt.Errorf("sandbox client: BaseURL must not contain a path")
+	}
+	if parsed.Scheme != "https" && !loopbackHosts[strings.ToLower(parsed.Hostname())] {
+		return nil, fmt.Errorf("sandbox client: non-https BaseURL is only allowed for loopback hosts (localhost/127.0.0.1/::1)")
+	}
+	if cfg.Token != "" {
+		// 拒绝空白边缘与 CR/LF，避免 Authorization 头注入。
+		if strings.TrimSpace(cfg.Token) != cfg.Token || strings.ContainsAny(cfg.Token, "\r\n") {
+			return nil, fmt.Errorf("sandbox client: Token must not contain surrounding whitespace or CR/LF")
+		}
+	}
 	if cfg.Timeout == 0 {
 		cfg.Timeout = 30 * time.Second
 	}
@@ -155,7 +197,14 @@ func NewClient(cfg Config) (*Client, error) {
 	cfg.BaseURL = strings.TrimRight(cfg.BaseURL, "/")
 	httpClient := cfg.HTTPClient
 	if httpClient == nil {
-		httpClient = &http.Client{Timeout: cfg.Timeout}
+		httpClient = &http.Client{
+			Timeout: cfg.Timeout,
+			// Bearer 身份只发往配置的 BaseURL：拒绝跟随重定向（3xx 按错误返回）。
+			// 自定义 HTTPClient 的调用方需自行保证相同的重定向纪律。
+			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+				return http.ErrUseLastResponse
+			},
+		}
 	}
 	return &Client{
 		cfg:        cfg,
@@ -169,7 +218,7 @@ func (c *Client) cleanupSessionCreateFailure(sessionID string) error {
 	return c.DeleteSession(ctx, sessionID)
 }
 
-func (c *Client) request(ctx context.Context, method, path string, body interface{}, res interface{}) error {
+func (c *Client) request(ctx context.Context, method, path string, body any, res any) error {
 	var bodyBytes []byte
 	if body != nil {
 		data, err := json.Marshal(body)
@@ -237,8 +286,8 @@ func (c *Client) request(ctx context.Context, method, path string, body interfac
 
 		defer resp.Body.Close()
 		if res != nil {
-			if err := json.NewDecoder(resp.Body).Decode(res); err != nil {
-				return fmt.Errorf("decode response: %w", err)
+			if err := decodeJSONLimited(resp.Body, res); err != nil {
+				return err
 			}
 		}
 		return nil
@@ -324,23 +373,23 @@ func (c *Client) Lease(ctx context.Context, req LeaseRequest) (*SandboxLease, er
 		return nil, err
 	}
 	var lease genapi.SandboxLease
-	if err := c.request(ctx, "POST", "/v1/sandboxes:lease", toGenLeaseRequest(req), &lease); err != nil {
+	if err := c.request(ctx, http.MethodPost, "/v1/sandboxes:lease", toGenLeaseRequest(req), &lease); err != nil {
 		return nil, err
 	}
 	return fromGenSandboxLease(lease), nil
 }
 
 func (c *Client) Release(ctx context.Context, sandboxID string) error {
-	return c.request(ctx, "POST", fmt.Sprintf("/v1/sandboxes/%s:release", url.PathEscape(sandboxID)), nil, nil)
+	return c.request(ctx, http.MethodPost, fmt.Sprintf("/v1/sandboxes/%s:release", url.PathEscape(sandboxID)), nil, nil)
 }
 
 func (c *Client) Destroy(ctx context.Context, sandboxID string) error {
-	return c.request(ctx, "DELETE", fmt.Sprintf("/v1/sandboxes/%s", url.PathEscape(sandboxID)), nil, nil)
+	return c.request(ctx, http.MethodDelete, fmt.Sprintf("/v1/sandboxes/%s", url.PathEscape(sandboxID)), nil, nil)
 }
 
 func (c *Client) ListSandboxes(ctx context.Context) ([]SandboxLease, error) {
 	var leases []genapi.SandboxLease
-	if err := c.request(ctx, "GET", "/v1/sandboxes", nil, &leases); err != nil {
+	if err := c.request(ctx, http.MethodGet, "/v1/sandboxes", nil, &leases); err != nil {
 		return nil, err
 	}
 	return fromGenSandboxLeases(leases), nil
@@ -395,7 +444,7 @@ func (c *Client) WaitJobWithOptions(ctx context.Context, jobID string, opts Wait
 			return nil, err
 		}
 		switch job.Status {
-		case "succeeded", "failed", "cancelled", "timed_out":
+		case "succeeded", "failed", "cancelled", "timed_out", "interrupted":
 			return job, nil
 		}
 		select {
@@ -467,8 +516,8 @@ func (c *Client) UploadJobFile(ctx context.Context, jobID string, name string, r
 	}
 	defer resp.Body.Close()
 	var art genapi.Artifact
-	if err := json.NewDecoder(resp.Body).Decode(&art); err != nil {
-		return nil, fmt.Errorf("decode response: %w", err)
+	if err := decodeJSONLimited(resp.Body, &art); err != nil {
+		return nil, err
 	}
 	result := fromGenArtifact(art)
 	return &result, nil
@@ -516,7 +565,7 @@ func (c *Client) JobLogs(ctx context.Context, jobID string, cursor int) (io.Read
 func (c *Client) ExecSession(ctx context.Context, sandboxID string, req ExecSessionRequest) (*ExecSessionResult, error) {
 	var result genapi.ExecSessionResult
 	path := fmt.Sprintf("/v1/sandboxes/%s/sessions", url.PathEscape(sandboxID))
-	if err := c.request(ctx, "POST", path, toGenExecSessionRequest(req), &result); err != nil {
+	if err := c.request(ctx, http.MethodPost, path, toGenExecSessionRequest(req), &result); err != nil {
 		return nil, err
 	}
 	return fromGenExecSessionResult(result), nil
@@ -717,8 +766,8 @@ func (c *Client) GetCatalog(ctx context.Context, query CatalogQuery) (*CatalogRe
 		return nil, ErrNotModified
 	}
 	var catalog genapi.EnvironmentCatalog
-	if err := json.NewDecoder(resp.Body).Decode(&catalog); err != nil {
-		return nil, fmt.Errorf("decode catalog response: %w", err)
+	if err := decodeJSONLimited(resp.Body, &catalog); err != nil {
+		return nil, err
 	}
 	result := fromGenCatalogResponse(catalog)
 	result.Revision = resp.Header.Get("ETag")
@@ -830,8 +879,8 @@ func (c *Client) UploadSessionFileConditional(ctx context.Context, sessionID, wo
 	}
 	defer resp.Body.Close()
 	var info WorkspaceFileInfo
-	if err := json.NewDecoder(resp.Body).Decode(&info); err != nil {
-		return nil, fmt.Errorf("decode response: %w", err)
+	if err := decodeJSONLimited(resp.Body, &info); err != nil {
+		return nil, err
 	}
 	return &info, nil
 }
@@ -905,19 +954,19 @@ func (c *Client) GetDependencyBuild(ctx context.Context, fingerprint string) (*D
 func (c *Client) StartGUI(ctx context.Context, sandboxID string, req StartGUIRequest) (*ViewerDescriptor, error) {
 	var viewer genapi.ViewerDescriptor
 	path := fmt.Sprintf("/v1/sandboxes/%s/gui:start", url.PathEscape(sandboxID))
-	if err := c.request(ctx, "POST", path, toGenStartGUIRequest(req), &viewer); err != nil {
+	if err := c.request(ctx, http.MethodPost, path, toGenStartGUIRequest(req), &viewer); err != nil {
 		return nil, err
 	}
 	return fromGenViewerDescriptor(viewer), nil
 }
 
 func (c *Client) StopGUI(ctx context.Context, sandboxID string) error {
-	return c.request(ctx, "POST", fmt.Sprintf("/v1/sandboxes/%s/gui:stop", url.PathEscape(sandboxID)), nil, nil)
+	return c.request(ctx, http.MethodPost, fmt.Sprintf("/v1/sandboxes/%s/gui:stop", url.PathEscape(sandboxID)), nil, nil)
 }
 
 func (c *Client) GetViewer(ctx context.Context, sandboxID string) (*ViewerDescriptor, error) {
 	var viewer genapi.ViewerDescriptor
-	if err := c.request(ctx, "GET", fmt.Sprintf("/v1/sandboxes/%s/viewer", url.PathEscape(sandboxID)), nil, &viewer); err != nil {
+	if err := c.request(ctx, http.MethodGet, fmt.Sprintf("/v1/sandboxes/%s/viewer", url.PathEscape(sandboxID)), nil, &viewer); err != nil {
 		return nil, err
 	}
 	return fromGenViewerDescriptor(viewer), nil
@@ -960,8 +1009,7 @@ func (c *Client) WaitViewer(ctx context.Context, sandboxID string, opts WaitView
 func (c *Client) PatchSandbox(ctx context.Context, sandboxID string, metadata map[string]string, resourceVersion int64) (*SandboxLease, error) {
 	patch := make(SandboxMetadataPatch, len(metadata))
 	for key, value := range metadata {
-		valueCopy := value
-		patch[key] = &valueCopy
+		patch[key] = &value
 	}
 	return c.PatchSandboxMetadata(ctx, sandboxID, patch, resourceVersion)
 }
@@ -983,8 +1031,8 @@ func (c *Client) PatchSandboxMetadata(ctx context.Context, sandboxID string, met
 		return nil, err
 	}
 	defer resp.Body.Close()
-	if err := json.NewDecoder(resp.Body).Decode(&lease); err != nil {
-		return nil, fmt.Errorf("decode response: %w", err)
+	if err := decodeJSONLimited(resp.Body, &lease); err != nil {
+		return nil, err
 	}
 	return fromGenSandboxLease(lease), nil
 }

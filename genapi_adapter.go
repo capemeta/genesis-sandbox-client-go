@@ -328,11 +328,11 @@ func cloneStringSlicePtr(value *[]string) []string {
 	return append([]string(nil), (*value)...)
 }
 
-func cloneAnyMapPtr(value *map[string]interface{}) map[string]interface{} {
+func cloneAnyMapPtr(value *map[string]any) map[string]any {
 	if value == nil || len(*value) == 0 {
 		return nil
 	}
-	cloned := make(map[string]interface{}, len(*value))
+	cloned := make(map[string]any, len(*value))
 	for key, item := range *value {
 		cloned[key] = item
 	}

@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -37,7 +38,7 @@ func TestNewClientValidatesBaseURL(t *testing.T) {
 }
 
 func TestSubmitJobValidatesSelectorAndExecutionLocally(t *testing.T) {
-	client, err := NewClient(Config{BaseURL: "http://sandbox.invalid"})
+	client, err := NewClient(Config{BaseURL: "https://sandbox.invalid"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -102,7 +103,7 @@ func TestResolveEnvironmentCanBindProductDefault(t *testing.T) {
 }
 
 func TestBuildDependenciesRequiresImmutableEnvironment(t *testing.T) {
-	client, err := NewClient(Config{BaseURL: "http://sandbox.invalid"})
+	client, err := NewClient(Config{BaseURL: "https://sandbox.invalid"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -538,5 +539,141 @@ func TestListAuditEventsAndSessionExecs(t *testing.T) {
 	}
 	if execs.Total != 1 || execs.NextCursor != "next-2" || len(execs.Items) != 1 || execs.Items[0].ExecID != "exec-1" {
 		t.Fatalf("execs = %+v", execs)
+	}
+}
+
+func TestNewClientEndpointSecurityConstraints(t *testing.T) {
+	for _, url := range []string{
+		"https://sandbox.example.com",
+		"http://localhost:18010",
+		"http://LOCALHOST:18010", // host comparison is case-insensitive
+		"http://127.0.0.1:18010",
+		"http://[::1]:18010",
+	} {
+		if _, err := NewClient(Config{BaseURL: url}); err != nil {
+			t.Errorf("NewClient(%q) error = %v, want nil", url, err)
+		}
+	}
+	for _, url := range []string{
+		"http://sandbox.example.com", // non-https, non-loopback
+		"http://10.0.0.8:18010",      // non-https private address
+		"https://sandbox.example.com/api",
+		"https://user:pass@sandbox.example.com",
+		"https://sandbox.example.com?x=1",
+		"https://sandbox.example.com#frag",
+	} {
+		if _, err := NewClient(Config{BaseURL: url}); err == nil {
+			t.Errorf("NewClient(%q) error = nil, want rejection", url)
+		}
+	}
+	for _, token := range []string{" leading", "trailing ", "bad\r\ntoken"} {
+		if _, err := NewClient(Config{BaseURL: "https://sandbox.example.com", Token: token}); err == nil {
+			t.Errorf("NewClient(token=%q) error = nil, want rejection", token)
+		}
+	}
+}
+
+func TestRedirectIsRefusedAndCredentialsNeverForwarded(t *testing.T) {
+	var paths []string
+	var authHeaders []string
+	var mu sync.Mutex
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		paths = append(paths, r.URL.Path)
+		authHeaders = append(authHeaders, r.Header.Get("Authorization"))
+		mu.Unlock()
+		if r.URL.Path == "/v1/jobs/redirect-me" {
+			w.Header().Set("Location", "/v1/leak")
+			w.WriteHeader(http.StatusFound)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"job_id":"job-1"}`))
+	}))
+	defer server.Close()
+
+	client, err := NewClient(Config{BaseURL: server.URL, Token: "secret-token"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = client.GetJob(context.Background(), "redirect-me")
+	var apiErr *APIError
+	if !errors.As(err, &apiErr) {
+		t.Fatalf("error = %T %v, want *APIError", err, err)
+	}
+	if apiErr.StatusCode != http.StatusFound {
+		t.Fatalf("status = %d, want 302", apiErr.StatusCode)
+	}
+	// 重定向目标从未被请求：凭据不可能被转发到其他地址。
+	if len(paths) != 1 || paths[0] != "/v1/jobs/redirect-me" {
+		t.Fatalf("paths = %v, want single original request", paths)
+	}
+	if authHeaders[0] != "Bearer secret-token" {
+		t.Fatalf("Authorization = %q", authHeaders[0])
+	}
+}
+
+func TestWaitJobReturnsInterruptedAsTerminal(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"job_id":"job-1","status":"interrupted","error_code":"SERVICE_RESTART_INTERRUPTED"}`))
+	}))
+	defer server.Close()
+
+	client, err := NewClient(Config{BaseURL: server.URL})
+	if err != nil {
+		t.Fatal(err)
+	}
+	job, err := client.WaitJob(context.Background(), "job-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if job.Status != "interrupted" {
+		t.Fatalf("status = %q, want interrupted", job.Status)
+	}
+}
+
+func TestExecHandleWaitReturnsInterruptedAsTerminal(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"exec_id":"exec-1","session_id":"sess-1","status":"interrupted","error_code":"SERVICE_RESTART_INTERRUPTED"}`))
+	}))
+	defer server.Close()
+
+	client, err := NewClient(Config{BaseURL: server.URL})
+	if err != nil {
+		t.Fatal(err)
+	}
+	handle := &ExecHandle{client: client, sessionID: "sess-1", execID: "exec-1"}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	result, err := handle.Wait(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.ErrorCode != "SERVICE_RESTART_INTERRUPTED" {
+		t.Fatalf("error_code = %q", result.ErrorCode)
+	}
+}
+
+func TestJSONResponseBudgetIsEnforced(t *testing.T) {
+	original := maxJSONResponseBytes
+	maxJSONResponseBytes = 64
+	defer func() { maxJSONResponseBytes = original }()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"job_id":"` + strings.Repeat("x", 200) + `"}`))
+	}))
+	defer server.Close()
+
+	client, err := NewClient(Config{BaseURL: server.URL})
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = client.GetJob(context.Background(), "job-1")
+	if err == nil || !strings.Contains(err.Error(), "exceeds") {
+		t.Fatalf("error = %v, want budget exceeded", err)
 	}
 }

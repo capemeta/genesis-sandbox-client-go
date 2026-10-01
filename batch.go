@@ -41,7 +41,6 @@ func RunBatch(
 	var wg sync.WaitGroup
 
 	for i, job := range jobs {
-		i, job := i, job
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -83,7 +82,6 @@ func RunBatchThrottled(
 	var wg sync.WaitGroup
 
 	for i, job := range jobs {
-		i, job := i, job
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
