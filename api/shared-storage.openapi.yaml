@@ -1,0 +1,49 @@
+WorkspaceBindingRequest:
+  oneOf:
+    - type: object
+      additionalProperties: false
+      required: [mode]
+      properties:
+        mode: {type: string, enum: [isolated]}
+    - type: object
+      additionalProperties: false
+      required: [mode, storage_ref, resource_id, binding_version]
+      properties:
+        mode: {type: string, enum: [shared]}
+        storage_ref: {type: string, maxLength: 128, pattern: '^[A-Za-z0-9_.-]+$'}
+        resource_id: {type: string, maxLength: 128, pattern: '^[A-Za-z0-9_.-]+$'}
+        binding_version: {type: integer, minimum: 1}
+SharedStorageResource:
+  type: object
+  additionalProperties: false
+  required: [storage_ref, resource_id, workspace_id, source_identity, provisioner_id, binding_version, budget_bytes, quota_mb, persistent, hard_quota, owner_tenant_id, owner_user_id, owner_run_id, hard_quota_verified, shared_attachment]
+  properties:
+    storage_ref: {type: string}
+    resource_id: {type: string}
+    workspace_id: {type: string}
+    source_identity: {type: string, pattern: '^[0-9a-f]{64}$'}
+    provisioner_id: {type: string}
+    binding_version: {type: integer, minimum: 1}
+    budget_bytes: {type: integer, minimum: 1}
+    quota_mb: {type: integer, minimum: 32}
+    persistent: {type: boolean}
+    hard_quota: {type: boolean}
+    owner_tenant_id: {type: string}
+    owner_user_id: {type: string}
+    owner_run_id: {type: string}
+    hard_quota_verified: {type: boolean}
+    shared_attachment: {type: boolean}
+    identity:
+      type: object
+      additionalProperties: false
+      required: [source_identity, device_id, root_inode, backing_device_id, backing_inode, filesystem, filesystem_uuid, capacity_bytes, inode_capacity]
+      properties:
+        source_identity: {type: string, pattern: '^[0-9a-f]{64}$'}
+        device_id: {type: integer, minimum: 0}
+        root_inode: {type: integer, minimum: 1}
+        backing_device_id: {type: integer, minimum: 0}
+        backing_inode: {type: integer, minimum: 1}
+        filesystem: {type: string, enum: [ext4]}
+        filesystem_uuid: {type: string, format: uuid}
+        capacity_bytes: {type: integer, minimum: 1}
+        inode_capacity: {type: integer, minimum: 1, maximum: 65536}

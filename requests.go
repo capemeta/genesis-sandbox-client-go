@@ -10,8 +10,9 @@ type CatalogQuery struct {
 }
 
 type ResolveEnvironmentRequest struct {
-	Environment EnvironmentSelector `json:"environment"`
-	TTLSeconds  int                 `json:"ttl_seconds,omitempty"`
+	IncludeFacts bool                `json:"include_facts,omitempty"`
+	Environment  EnvironmentSelector `json:"environment"`
+	TTLSeconds   int                 `json:"ttl_seconds,omitempty"`
 }
 
 type LeaseRequest struct {
@@ -39,21 +40,26 @@ type SubmitJobRequest struct {
 }
 
 type ExecSessionRequest struct {
-	Command        []string          `json:"command,omitempty"`
-	Code           string            `json:"code,omitempty"`
-	Language       string            `json:"language,omitempty"`
-	WorkingDir     string            `json:"working_dir,omitempty"`
-	Env            map[string]string `json:"env,omitempty"`
-	TimeoutSeconds int               `json:"timeout_seconds,omitempty"`
-	CallbackURL    string            `json:"callback_url,omitempty"` // Async exec only; sync endpoints ignore it.
+	TrustedGovernance *TrustedExecutionGovernance `json:"trusted_governance,omitempty"`
+	OutputDirectory   string                      `json:"output_directory,omitempty"`
+	SubprocessPolicy  string                      `json:"subprocess_policy,omitempty"`
+	OperationID       string                      `json:"operation_id,omitempty"`
+	Command           []string                    `json:"command,omitempty"`
+	Code              string                      `json:"code,omitempty"`
+	Language          string                      `json:"language,omitempty"`
+	WorkingDir        string                      `json:"working_dir,omitempty"`
+	Env               map[string]string           `json:"env,omitempty"`
+	TimeoutSeconds    int                         `json:"timeout_seconds,omitempty"`
+	CallbackURL       string                      `json:"callback_url,omitempty"` // Async exec only; sync endpoints ignore it.
 }
 
 type CreateWorkspaceRequest struct {
-	WorkspaceID   string            `json:"workspace_id,omitempty"`
-	RetentionMode string            `json:"retention_mode,omitempty"`
-	Metadata      map[string]string `json:"metadata,omitempty"`
-	TTLSeconds    int               `json:"ttl_seconds,omitempty"`
-	QuotaMB       int               `json:"quota_mb,omitempty"`
+	WorkspaceBinding *WorkspaceBindingRequest `json:"workspace_binding,omitempty"`
+	WorkspaceID      string                   `json:"workspace_id,omitempty"`
+	RetentionMode    string                   `json:"retention_mode,omitempty"`
+	Metadata         map[string]string        `json:"metadata,omitempty"`
+	TTLSeconds       int                      `json:"ttl_seconds,omitempty"`
+	QuotaMB          int                      `json:"quota_mb,omitempty"`
 }
 
 type CreateSessionRequest struct {
@@ -65,7 +71,6 @@ type CreateSessionRequest struct {
 	WorkspaceRetention  string               `json:"workspace_retention,omitempty"`
 	WorkspaceTTLSeconds int                  `json:"workspace_ttl_seconds,omitempty"`
 	IdempotencyKey      string               `json:"idempotency_key,omitempty"`
-	Env                 map[string]string    `json:"env,omitempty"` // SDK convenience: create session, then patch session context env.
 	Metadata            map[string]string    `json:"metadata,omitempty"`
 }
 

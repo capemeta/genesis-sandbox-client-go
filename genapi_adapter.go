@@ -73,6 +73,9 @@ func toGenResolveEnvironmentRequest(req ResolveEnvironmentRequest) genapi.Resolv
 	result := genapi.ResolveEnvironmentRequest{
 		Environment: *toGenEnvironmentSelector(&req.Environment),
 	}
+	if req.IncludeFacts {
+		result.IncludeFacts = &req.IncludeFacts
+	}
 	if req.TTLSeconds > 0 {
 		result.TtlSeconds = optInt(req.TTLSeconds)
 	}
@@ -125,14 +128,20 @@ func toGenSubmitJobRequest(req SubmitJobRequest) genapi.SubmitJobRequest {
 
 func toGenExecSessionRequest(req ExecSessionRequest) genapi.ExecSessionRequest {
 	result := genapi.ExecSessionRequest{
-		Code:       optString(req.Code),
-		Command:    optStringSlice(req.Command),
-		WorkingDir: optString(req.WorkingDir),
-		Env:        optMap(req.Env),
+		OutputDirectory: optString(req.OutputDirectory),
+		OperationId:     optString(req.OperationID),
+		Code:            optString(req.Code),
+		Command:         optStringSlice(req.Command),
+		WorkingDir:      optString(req.WorkingDir),
+		Env:             optMap(req.Env),
 	}
 	if req.Language != "" {
 		language := genapi.ExecSessionRequestLanguage(req.Language)
 		result.Language = &language
+	}
+	if req.SubprocessPolicy != "" {
+		policy := genapi.ExecSessionRequestSubprocessPolicy(req.SubprocessPolicy)
+		result.SubprocessPolicy = &policy
 	}
 	if req.TimeoutSeconds > 0 {
 		result.TimeoutSeconds = optInt(req.TimeoutSeconds)
@@ -142,15 +151,22 @@ func toGenExecSessionRequest(req ExecSessionRequest) genapi.ExecSessionRequest {
 
 func toGenAsyncExecRequest(req ExecSessionRequest) genapi.AsyncExecRequest {
 	result := genapi.AsyncExecRequest{
-		Code:        optString(req.Code),
-		Command:     optStringSlice(req.Command),
-		WorkingDir:  optString(req.WorkingDir),
-		Env:         optMap(req.Env),
-		CallbackUrl: optString(req.CallbackURL),
+		TrustedGovernance: req.TrustedGovernance,
+		OutputDirectory:   optString(req.OutputDirectory),
+		OperationId:       optString(req.OperationID),
+		Code:              optString(req.Code),
+		Command:           optStringSlice(req.Command),
+		WorkingDir:        optString(req.WorkingDir),
+		Env:               optMap(req.Env),
+		CallbackUrl:       optString(req.CallbackURL),
 	}
 	if req.Language != "" {
 		language := genapi.AsyncExecRequestLanguage(req.Language)
 		result.Language = &language
+	}
+	if req.SubprocessPolicy != "" {
+		policy := genapi.AsyncExecRequestSubprocessPolicy(req.SubprocessPolicy)
+		result.SubprocessPolicy = &policy
 	}
 	if req.TimeoutSeconds > 0 {
 		result.TimeoutSeconds = optInt(req.TimeoutSeconds)
@@ -163,6 +179,7 @@ func toGenCreateWorkspaceRequest(req CreateWorkspaceRequest) genapi.CreateWorksp
 		WorkspaceId: optString(req.WorkspaceID),
 		Metadata:    optMap(req.Metadata),
 	}
+	result.WorkspaceBinding = toGenWorkspaceBinding(req.WorkspaceBinding)
 	if req.RetentionMode != "" {
 		mode := genapi.CreateWorkspaceRequestRetentionMode(req.RetentionMode)
 		result.RetentionMode = &mode
@@ -202,11 +219,7 @@ func toGenCreateSessionRequest(req CreateSessionRequest) genapi.CreateSessionReq
 }
 
 func toGenSessionContext(patch SessionContext) genapi.SessionContext {
-	result := genapi.SessionContext{
-		Cwd: optString(patch.Cwd),
-		Env: optMap(patch.Env),
-	}
-	return result
+	return genapi.SessionContext{Cwd: optString(patch.Cwd)}
 }
 
 func toGenBuildDependencyRequest(req BuildDependencyRequest) genapi.BuildDependencyRequest {
@@ -379,7 +392,7 @@ func fromGenCatalogCardFeatures(value *genapi.CatalogCardFeatures) *ProfileFeatu
 func fromGenCatalogCard(card genapi.CatalogCard) CatalogCard {
 	return CatalogCard{
 		ProfileName:     card.Name,
-		ProfileRevision: card.ProfileRevision,
+		ProfileRevision: derefString(card.ProfileRevision),
 		DisplayName:     derefString(card.DisplayName),
 		Description:     derefString(card.Description),
 		Capabilities:    cloneStringSlicePtr(card.Capabilities),
@@ -409,6 +422,7 @@ func fromGenCatalogResponse(catalog genapi.EnvironmentCatalog) *CatalogResponse 
 
 func fromGenEnvironmentResolution(value genapi.EnvironmentResolution) *EnvironmentResolution {
 	return &EnvironmentResolution{
+		Facts:           fromGenWorkspaceViewFacts(value.Facts),
 		ResolutionID:    derefString(value.ResolutionId),
 		ProfileName:     derefString(value.ProfileName),
 		ProfileRevision: derefString(value.ProfileRevision),
@@ -452,7 +466,7 @@ func fromGenJobResult(value genapi.JobResult) *JobResult {
 		SandboxID:            derefString(value.SandboxId),
 		TaskType:             derefString(value.TaskType),
 		Operation:            derefString(value.Operation),
-		Status:               derefString(value.Status),
+		Status:               derefString((*string)(value.Status)),
 		ExitCode:             derefInt(value.ExitCode),
 		Stdout:               derefString(value.Stdout),
 		Stderr:               derefString(value.Stderr),
@@ -487,9 +501,13 @@ func fromGenJobList(value genapi.JobList) *JobList {
 
 func fromGenExecRecord(value genapi.ExecRecord) *ExecRecord {
 	return &ExecRecord{
-		ExecID:               derefString(value.ExecId),
-		SessionID:            derefString(value.SessionId),
-		Status:               derefStringEnum(value.Status),
+		TenantID:             derefString(value.TenantId),
+		UserID:               derefString(value.UserId),
+		StopConfirmed:        derefBool(value.StopConfirmed),
+		OperationID:          value.OperationId,
+		ExecID:               value.ExecId,
+		SessionID:            value.SessionId,
+		Status:               string(value.Status),
 		ExitCode:             derefInt(value.ExitCode),
 		Stdout:               derefString(value.Stdout),
 		Stderr:               derefString(value.Stderr),
@@ -500,7 +518,7 @@ func fromGenExecRecord(value genapi.ExecRecord) *ExecRecord {
 		EffectiveEnvironment: fromGenEffectiveEnvironment(value.EffectiveEnvironment),
 		LogsURL:              derefString(value.LogsUrl),
 		DurationMS:           derefInt64(value.DurationMs),
-		CreatedAt:            derefTime(value.CreatedAt),
+		CreatedAt:            value.CreatedAt,
 		StartedAt:            value.StartedAt,
 		FinishedAt:           value.FinishedAt,
 	}
@@ -527,7 +545,7 @@ func fromGenSandboxLease(value genapi.SandboxLease) *SandboxLease {
 		TenantID:             derefString(value.TenantId),
 		WorkspaceID:          derefString(value.WorkspaceId),
 		RuntimeProfile:       derefString(value.RuntimeProfile),
-		Status:               derefString(value.Status),
+		Status:               derefString((*string)(value.Status)),
 		CreatedAt:            derefTime(value.CreatedAt),
 		ExpiresAt:            derefTime(value.ExpiresAt),
 		EffectivePolicy:      cloneAnyMapPtr(value.EffectivePolicy),
@@ -551,34 +569,40 @@ func fromGenSandboxLeases(values []genapi.SandboxLease) []SandboxLease {
 
 func fromGenExecSessionResult(value genapi.ExecSessionResult) *ExecSessionResult {
 	return &ExecSessionResult{
-		ExitCode:        derefInt(value.ExitCode),
-		Stdout:          derefString(value.Stdout),
-		Stderr:          derefString(value.Stderr),
-		StdoutTruncated: derefBool(value.StdoutTruncated),
-		StderrTruncated: derefBool(value.StderrTruncated),
-		Environment:     derefStringEnum(value.Environment),
-		SessionID:       derefString(value.SessionId),
-		WorkspaceID:     derefString(value.WorkspaceId),
-		SandboxID:       derefString(value.SandboxId),
-		Cwd:             derefString(value.Cwd),
+		ExecID:               derefString(value.ExecId),
+		Status:               string(value.Status),
+		ErrorCode:            derefString(value.ErrorCode),
+		EffectiveEnvironment: fromGenEffectiveEnvironment(value.EffectiveEnvironment),
+		ExitCode:             value.ExitCode,
+		Stdout:               value.Stdout,
+		Stderr:               value.Stderr,
+		StdoutTruncated:      derefBool(value.StdoutTruncated),
+		StderrTruncated:      derefBool(value.StderrTruncated),
+		Environment:          derefStringEnum((*string)(value.Environment)),
+		SessionID:            derefString(value.SessionId),
+		WorkspaceID:          derefString(value.WorkspaceId),
+		SandboxID:            derefString(value.SandboxId),
+		Cwd:                  derefString(value.Cwd),
 	}
 }
 
 func fromGenWorkspace(value genapi.Workspace) *Workspace {
 	return &Workspace{
-		WorkspaceID:   derefString(value.WorkspaceId),
-		TenantID:      derefString(value.TenantId),
-		UserID:        derefString(value.UserId),
-		CreatedAt:     derefTime(value.CreatedAt),
-		Metadata:      cloneStringMapPtr(value.Metadata),
-		RetentionMode: derefStringEnum(value.RetentionMode),
-		ExpiresAt:     value.ExpiresAt,
-		QuotaMB:       derefInt(value.QuotaMb),
+		LifecycleRevision: lifecycleRevision(value.LifecycleRevision),
+		WorkspaceID:       derefString(value.WorkspaceId),
+		TenantID:          derefString(value.TenantId),
+		UserID:            derefString(value.UserId),
+		CreatedAt:         derefTime(value.CreatedAt),
+		Metadata:          cloneStringMapPtr(value.Metadata),
+		RetentionMode:     derefStringEnum(value.RetentionMode),
+		ExpiresAt:         value.ExpiresAt,
+		QuotaMB:           derefInt(value.QuotaMb),
 	}
 }
 
 func fromGenSession(value genapi.Session) *Session {
 	return &Session{
+		IdempotencyKey:       derefString(value.IdempotencyKey),
 		SessionID:            derefString(value.SessionId),
 		TenantID:             derefString(value.TenantId),
 		UserID:               derefString(value.UserId),
@@ -587,7 +611,7 @@ func fromGenSession(value genapi.Session) *Session {
 		ProfileRevision:      derefString(value.ProfileRevision),
 		StatePolicy:          derefString(value.StatePolicy),
 		ActiveSandboxID:      derefString(value.ActiveSandboxId),
-		Status:               derefString(value.Status),
+		Status:               derefString((*string)(value.Status)),
 		CreatedAt:            derefTime(value.CreatedAt),
 		ExpiresAt:            derefTime(value.ExpiresAt),
 		Metadata:             cloneStringMapPtr(value.Metadata),
@@ -632,11 +656,12 @@ func fromGenViewerDescriptor(value genapi.ViewerDescriptor) *ViewerDescriptor {
 
 func fromGenWorkspaceFileInfo(value genapi.WorkspaceFileInfo) WorkspaceFileInfo {
 	return WorkspaceFileInfo{
-		Path:        derefString(value.Path),
+		Executable:  value.Executable,
+		Path:        value.Path,
 		SandboxPath: derefString(value.SandboxPath),
-		Environment: derefStringEnum(value.Environment),
+		Environment: derefStringEnum((*string)(value.Environment)),
 		Name:        derefString(value.Name),
-		Kind:        derefStringEnum(value.Kind),
+		Kind:        string(value.Kind),
 		Size:        derefInt64(value.Size),
 		SHA256:      derefString(value.Sha256),
 		MIME:        derefString(value.Mime),
@@ -660,10 +685,7 @@ func fromGenWorkspaceListResult(value genapi.WorkspaceListResult) *WorkspaceList
 }
 
 func fromGenSessionContext(value genapi.SessionContext) *SessionContext {
-	return &SessionContext{
-		Cwd: derefString(value.Cwd),
-		Env: cloneStringMapPtr(value.Env),
-	}
+	return &SessionContext{Cwd: derefString(value.Cwd)}
 }
 
 func fromGenAuditEvent(value genapi.AuditEvent) AuditEvent {

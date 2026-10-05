@@ -183,7 +183,7 @@ func TestIdempotentGetRetriesTransientResponse(t *testing.T) {
 	}
 }
 
-func TestPostWithIdempotencyKeyCanRetry(t *testing.T) {
+func TestPostWithIdempotencyKeyDoesNotReplayUnknownSideEffect(t *testing.T) {
 	var calls atomic.Int32
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -203,15 +203,15 @@ func TestPostWithIdempotencyKeyCanRetry(t *testing.T) {
 	}
 	if _, err := client.SubmitJob(context.Background(), SubmitJobRequest{
 		Code: "print(1)", IdempotencyKey: "request-1",
-	}); err != nil {
-		t.Fatal(err)
+	}); err == nil {
+		t.Fatal("unknown mutation must return an error, not replay")
 	}
-	if calls.Load() != 2 {
-		t.Fatalf("calls = %d, want 2", calls.Load())
+	if calls.Load() != 1 {
+		t.Fatalf("calls = %d, want 1", calls.Load())
 	}
 }
 
-func TestCreateSessionEnvIsAppliedViaContextPatch(t *testing.T) {
+func TestCreateSessionDoesNotPatchRemovedEnvironmentContext(t *testing.T) {
 	var createCalls atomic.Int32
 	var patchCalls atomic.Int32
 
@@ -255,7 +255,6 @@ func TestCreateSessionEnvIsAppliedViaContextPatch(t *testing.T) {
 
 	session, err := client.CreateSession(context.Background(), CreateSessionRequest{
 		StatePolicy: "session",
-		Env:         map[string]string{"FOO": "bar"},
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -263,12 +262,12 @@ func TestCreateSessionEnvIsAppliedViaContextPatch(t *testing.T) {
 	if session.SessionID != "sess-1" {
 		t.Fatalf("session_id = %q", session.SessionID)
 	}
-	if createCalls.Load() != 1 || patchCalls.Load() != 1 {
+	if createCalls.Load() != 1 || patchCalls.Load() != 0 {
 		t.Fatalf("createCalls=%d patchCalls=%d", createCalls.Load(), patchCalls.Load())
 	}
 }
 
-func TestCreateSessionEnvPatchFailureCleansUpSession(t *testing.T) {
+func TestCreateSessionDoesNotDeleteSuccessfulAllocationForRemovedEnvironmentContext(t *testing.T) {
 	var deleteCalls atomic.Int32
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -310,13 +309,12 @@ func TestCreateSessionEnvPatchFailureCleansUpSession(t *testing.T) {
 
 	_, err = client.CreateSession(context.Background(), CreateSessionRequest{
 		StatePolicy: "session",
-		Env:         map[string]string{"FOO": "bar"},
 	})
-	if err == nil {
-		t.Fatal("CreateSession() error = nil, want env patch failure")
+	if err != nil {
+		t.Fatal(err)
 	}
-	if deleteCalls.Load() != 1 {
-		t.Fatalf("deleteCalls=%d, want 1", deleteCalls.Load())
+	if deleteCalls.Load() != 0 {
+		t.Fatalf("deleteCalls=%d, want 0", deleteCalls.Load())
 	}
 }
 
@@ -510,7 +508,7 @@ func TestListAuditEventsAndSessionExecs(t *testing.T) {
 				t.Fatalf("exec query = %s", r.URL.RawQuery)
 			}
 			_, _ = w.Write([]byte(`{
-				"items":[{"exec_id":"exec-1","session_id":"sess-1","status":"queued","exit_code":0}],
+				"items":[{"exec_id":"exec-1","operation_id":"original","session_id":"sess-1","status":"queued","exit_code":0}],
 				"next_cursor":"next-2",
 				"total":1
 			}`))
@@ -675,5 +673,76 @@ func TestJSONResponseBudgetIsEnforced(t *testing.T) {
 	_, err = client.GetJob(context.Background(), "job-1")
 	if err == nil || !strings.Contains(err.Error(), "exceeds") {
 		t.Fatalf("error = %v, want budget exceeded", err)
+	}
+}
+
+func TestSessionLookupResumeAndExecLookup(t *testing.T) {
+	var paths []string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		paths = append(paths, r.Method+" "+r.URL.Path+"?"+r.URL.RawQuery)
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case r.Method == "GET" && r.URL.Path == "/v1/sessions:lookup":
+			if r.URL.Query().Get("idempotency_key") != "idem-1" {
+				t.Errorf("lookup query = %s", r.URL.RawQuery)
+			}
+			_, _ = w.Write([]byte(`{"session_id":"sess-1","workspace_id":"ws-1","idempotency_key":"idem-1","status":"active"}`))
+		case r.Method == "POST" && r.URL.Path == "/v1/sessions/sess-1:resume":
+			_, _ = w.Write([]byte(`{"session_id":"sess-1","status":"active","active_sandbox_id":"sbx-9"}`))
+		case r.Method == "GET" && r.URL.Path == "/v1/sessions/sess-1/execs:lookup":
+			if r.URL.Query().Get("operation_id") != "op-1" {
+				t.Errorf("exec lookup query = %s", r.URL.RawQuery)
+			}
+			_, _ = w.Write([]byte(`{"exec_id":"exec-1","operation_id":"op-1","session_id":"sess-1","status":"succeeded"}`))
+		default:
+			t.Errorf("unexpected request %s %s", r.Method, r.URL)
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer server.Close()
+	client, err := NewClient(Config{BaseURL: server.URL})
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.Background()
+
+	sess, err := client.LookupSession(ctx, "idem-1")
+	if err != nil || sess.SessionID != "sess-1" {
+		t.Fatalf("LookupSession = %+v err=%v", sess, err)
+	}
+	resumed, err := client.ResumeSession(ctx, "sess-1")
+	if err != nil || resumed.ActiveSandboxID != "sbx-9" {
+		t.Fatalf("ResumeSession = %+v err=%v", resumed, err)
+	}
+	record, err := client.GetExecByOperation(ctx, "sess-1", "op-1")
+	if err != nil || record.ExecID != "exec-1" || record.Status != "succeeded" {
+		t.Fatalf("GetExecByOperation = %+v err=%v", record, err)
+	}
+	if len(paths) != 3 {
+		t.Fatalf("unexpected call sequence: %v", paths)
+	}
+}
+
+func TestExecSessionResultParsesStatusAndEffectiveEnvironment(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"exec_id":"exec-7","status":"succeeded","exit_code":0,"stdout":"ok","stderr":"",
+			"error_code":"","effective_environment":{"profile_name":"code-polyglot-basic","selection_mode":"profile"},
+			"session_id":"sess-1","workspace_id":"ws-1","environment":"sandbox"}`))
+	}))
+	defer server.Close()
+	client, err := NewClient(Config{BaseURL: server.URL})
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := client.ExecNamedSession(context.Background(), "sess-1", ExecSessionRequest{Code: "print(1)"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.ExecID != "exec-7" || result.Status != "succeeded" || result.Stdout != "ok" {
+		t.Fatalf("ExecSessionResult = %+v", result)
+	}
+	if result.EffectiveEnvironment == nil || result.EffectiveEnvironment.ProfileName != "code-polyglot-basic" {
+		t.Fatalf("effective environment not parsed: %+v", result.EffectiveEnvironment)
 	}
 }

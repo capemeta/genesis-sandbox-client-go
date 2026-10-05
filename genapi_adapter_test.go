@@ -81,7 +81,6 @@ func TestGenAdapterCreateSessionRequestOmitsConvenienceEnv(t *testing.T) {
 		WorkspaceRetention:  "ttl",
 		WorkspaceTTLSeconds: 600,
 		IdempotencyKey:      "idem-1",
-		Env:                 map[string]string{"FOO": "bar"},
 		Metadata:            map[string]string{"trace": "abc"},
 	}
 

@@ -30,6 +30,16 @@ func (sb *Sandbox) Run(ctx context.Context, cmdOrCode string, opts ...ExecOption
 // runSession executes via ExecNamedSession (Session mode).
 func (sb *Sandbox) runSession(ctx context.Context, cmdOrCode string, o *execOptions) (*ExecResult, error) {
 	req := buildExecSessionRequest(cmdOrCode, o)
+	if defaults := sb.snapshotDefaultEnv(); len(defaults) > 0 {
+		merged := make(map[string]string, len(defaults)+len(req.Env))
+		for k, v := range defaults {
+			merged[k] = v
+		}
+		for k, v := range req.Env {
+			merged[k] = v
+		}
+		req.Env = merged
+	}
 
 	callCtx := ctx
 	if o.timeout > 0 {
@@ -43,11 +53,13 @@ func (sb *Sandbox) runSession(ctx context.Context, cmdOrCode string, o *execOpti
 		return nil, fmt.Errorf("sandbox.Run (session): %w", err)
 	}
 	return &ExecResult{
-		ExitCode:        res.ExitCode,
-		Stdout:          res.Stdout,
-		Stderr:          res.Stderr,
-		StdoutTruncated: res.StdoutTruncated,
-		StderrTruncated: res.StderrTruncated,
+		ExitCode:             res.ExitCode,
+		Stdout:               res.Stdout,
+		Stderr:               res.Stderr,
+		ErrorCode:            res.ErrorCode,
+		EffectiveEnvironment: res.EffectiveEnvironment,
+		StdoutTruncated:      res.StdoutTruncated,
+		StderrTruncated:      res.StderrTruncated,
 	}, nil
 }
 
@@ -76,6 +88,12 @@ func (sb *Sandbox) RunAsync(ctx context.Context, cmdOrCode string, opts ...ExecO
 	}
 	o := resolveExecOptions(opts)
 	req := buildExecSessionRequest(cmdOrCode, o)
+	if defaults := sb.snapshotDefaultEnv(); len(defaults) > 0 {
+		for key, value := range req.Env {
+			defaults[key] = value
+		}
+		req.Env = defaults
+	}
 	if o.callbackURL != "" {
 		req.CallbackURL = o.callbackURL
 	}
@@ -141,7 +159,7 @@ func (h *ExecHandle) WaitWithOptions(ctx context.Context, opts WaitExecOptions) 
 }
 
 // Cancel cancels a running or queued exec.
-func (h *ExecHandle) Cancel(ctx context.Context) error {
+func (h *ExecHandle) Cancel(ctx context.Context) (*ExecRecord, error) {
 	return h.client.CancelExec(ctx, h.sessionID, h.execID)
 }
 

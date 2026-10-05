@@ -1,6 +1,6 @@
 module github.com/capemeta/genesis-sandbox-client-go
 
-go 1.22
+go 1.24.0
 
 require github.com/oapi-codegen/runtime v1.6.0
 

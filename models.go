@@ -48,12 +48,13 @@ type ProfileFeatures struct {
 }
 
 // SessionContext represents the mutable session-level cwd/env state.
+// SessionContext 是会话持久上下文；服务端协议已收敛为仅 cwd（env 改为随执行请求下发）。
 type SessionContext struct {
-	Cwd string            `json:"cwd"`
-	Env map[string]string `json:"env,omitempty"`
+	Cwd string `json:"cwd"`
 }
 
 type WorkspaceFileInfo struct {
+	Executable  bool      `json:"executable"`
 	Path        string    `json:"path"`
 	SandboxPath string    `json:"sandbox_path,omitempty"`
 	Environment string    `json:"environment"`

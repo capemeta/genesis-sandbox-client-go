@@ -24,7 +24,33 @@ go generate ./internal/genapi
 
 - `internal/genapi` 只服务内部协议边界，不直接暴露给 SDK 用户
 - 对外仍然由手写的 `sandbox` 包提供稳定、易用的 public API
-- 少量高层易用性能力允许在 facade 层做补充，例如 `CreateSessionRequest.Env`
+- 会话上下文仅支持 `cwd`；默认环境使用 `WithEnv` / `SetEnv`，逐次执行环境使用 `WithExecEnv`。
+
+## 0.3.0 工作区协议
+
+`CreateWorkspaceRequest.WorkspaceBinding` 支持 `isolated` 或管理员登记的 `shared` 存储引用。
+共享创建必须使用与资源一致的工作区 ID、`explicit_delete` 保留策略且不设置 TTL；SDK 不接受宿主路径或自授所有者字段。
+`InspectSharedStorage` 返回真实资源与配额事实，`shared_attachment=false` 不等于允许附着。
+`GetWorkspaceView` / `PrepareWorkspaceView` / `SealWorkspaceView`、`GetSessionHistory` / `PurgeSessionWorkspace`、
+`LookupSession` / `GetExecByOperation` / `ResumeSession` 与 `SetSessionFileExecutable` 对齐服务 v1 API。
+执行请求的 `OperationID` 与响应的 `EffectiveEnvironment` 保留到公开模型。
+只有 GET/HEAD/OPTIONS 只读请求允许自动重试；POST/PUT/PATCH/DELETE 即使携带幂等键也不自动重发。
+未知创建或执行结果使用稳定键查询核对，查询接口不授予新的执行权限。文件 stat/remove 缺失路径保留 `404 WORKSPACE_PATH_NOT_FOUND`，不套用资源删除的幂等成功语义。
+
+高层 `Sandbox` 自动心跳遇到任意续租失败或会话/工作区回执失配时立即停止，不进入下一个定时 renew，也不自动 resume、重连或重建。`HeartbeatError()` 返回首个 `HeartbeatRenewalError`，其 `SessionID/WorkspaceID/Cause` 保留原身份与底层错误，支持 `errors.As/Unwrap`。再次 `Open()` 不重启心跳；调用方先只读核对原 session，未确认结果前不能继续自动续租。`CloseContext()` 不清除错误证据。
+
+协议快照从服务两个 OpenAPI 文件结构化打包；固定 Python 环境需已具备 PyYAML：
+
+```powershell
+& D:/Work/workspace/python/genesis-ai/genesis-ai-platform/.venv/Scripts/python.exe scripts/sync_protocol.py ../genesis-sandbox/api/openapi.yaml
+$env:GOWORK='off'
+go generate ./internal/genapi
+go test ./...
+go vet ./...
+go build ./...
+```
+
+单元 HTTP 协议测试不证明容器隔离、共享挂载或硬配额通过。真实服务测试需显式设置 `GENESIS_SANDBOX_INTEGRATION=1` 及凭据。
 
 ## 安装
 

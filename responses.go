@@ -28,17 +28,22 @@ type CatalogResponse struct {
 
 // EnvironmentResolution is the response from POST /v1/environment:resolve.
 type EnvironmentResolution struct {
-	ResolutionID    string   `json:"resolution_id"`
-	ProfileName     string   `json:"profile_name"`
-	ProfileRevision string   `json:"profile_revision,omitempty"`
-	SelectionMode   string   `json:"selection_mode"`
-	SelectionReason []string `json:"selection_reason,omitempty"`
-	Capabilities    []string `json:"capabilities,omitempty"`
-	ExpiresAt       string   `json:"expires_at"`
+	Facts           *WorkspaceViewFacts `json:"facts,omitempty"`
+	ResolutionID    string              `json:"resolution_id"`
+	ProfileName     string              `json:"profile_name"`
+	ProfileRevision string              `json:"profile_revision,omitempty"`
+	SelectionMode   string              `json:"selection_mode"`
+	SelectionReason []string            `json:"selection_reason,omitempty"`
+	Capabilities    []string            `json:"capabilities,omitempty"`
+	ExpiresAt       string              `json:"expires_at"`
 }
 
 // ExecRecord represents an async exec status record (Phase 2).
 type ExecRecord struct {
+	TenantID             string                `json:"tenant_id,omitempty"`
+	UserID               string                `json:"user_id,omitempty"`
+	StopConfirmed        bool                  `json:"stop_confirmed"`
+	OperationID          string                `json:"operation_id"`
 	ExecID               string                `json:"exec_id"`
 	SessionID            string                `json:"session_id"`
 	Status               string                `json:"status"` // queued|running|succeeded|failed|cancelled
@@ -123,30 +128,36 @@ type Artifact struct {
 }
 
 type ExecSessionResult struct {
-	ExitCode        int    `json:"exit_code"`
-	Stdout          string `json:"stdout"`
-	Stderr          string `json:"stderr"`
-	StdoutTruncated bool   `json:"stdout_truncated,omitempty"`
-	StderrTruncated bool   `json:"stderr_truncated,omitempty"`
-	Environment     string `json:"environment"`
-	SessionID       string `json:"session_id,omitempty"`
-	WorkspaceID     string `json:"workspace_id,omitempty"`
-	SandboxID       string `json:"sandbox_id,omitempty"`
-	Cwd             string `json:"cwd,omitempty"`
+	ExecID               string                `json:"exec_id,omitempty"`
+	Status               string                `json:"status"`
+	ErrorCode            string                `json:"error_code,omitempty"`
+	EffectiveEnvironment *EffectiveEnvironment `json:"effective_environment,omitempty"`
+	ExitCode             int                   `json:"exit_code"`
+	Stdout               string                `json:"stdout"`
+	Stderr               string                `json:"stderr"`
+	StdoutTruncated      bool                  `json:"stdout_truncated,omitempty"`
+	StderrTruncated      bool                  `json:"stderr_truncated,omitempty"`
+	Environment          string                `json:"environment"`
+	SessionID            string                `json:"session_id,omitempty"`
+	WorkspaceID          string                `json:"workspace_id,omitempty"`
+	SandboxID            string                `json:"sandbox_id,omitempty"`
+	Cwd                  string                `json:"cwd,omitempty"`
 }
 
 type Workspace struct {
-	WorkspaceID   string            `json:"workspace_id"`
-	TenantID      string            `json:"tenant_id"`
-	UserID        string            `json:"user_id,omitempty"`
-	CreatedAt     time.Time         `json:"created_at"`
-	Metadata      map[string]string `json:"metadata,omitempty"`
-	RetentionMode string            `json:"retention_mode"`
-	ExpiresAt     *time.Time        `json:"expires_at,omitempty"`
-	QuotaMB       int               `json:"quota_mb,omitempty"`
+	LifecycleRevision int64             `json:"lifecycle_revision"`
+	WorkspaceID       string            `json:"workspace_id"`
+	TenantID          string            `json:"tenant_id"`
+	UserID            string            `json:"user_id,omitempty"`
+	CreatedAt         time.Time         `json:"created_at"`
+	Metadata          map[string]string `json:"metadata,omitempty"`
+	RetentionMode     string            `json:"retention_mode"`
+	ExpiresAt         *time.Time        `json:"expires_at,omitempty"`
+	QuotaMB           int               `json:"quota_mb,omitempty"`
 }
 
 type Session struct {
+	IdempotencyKey       string                `json:"idempotency_key,omitempty"`
 	SessionID            string                `json:"session_id"`
 	TenantID             string                `json:"tenant_id"`
 	UserID               string                `json:"user_id,omitempty"`

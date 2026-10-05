@@ -1,120 +1,153 @@
 openapi: 3.0.3
 info:
   title: Genesis Sandbox Service API
-  description: >-
-    Secure sandbox API for jobs, sessions, environment profiles, workspaces and artifacts.
-    Public surface uses EnvironmentSelector for environment selection; bare sandbox leasing
-    is an Advanced API (requires sandbox.advanced scope). Operations marked x-api-layer:
-    advanced are not part of the Public surface.
+  description: 'Secure sandbox API for jobs, sessions, environment profiles, workspaces
+    and artifacts. Public surface uses EnvironmentSelector for environment selection;
+    bare sandbox leasing is an Advanced API (requires sandbox.advanced scope). Operations
+    marked x-api-layer: advanced are not part of the Public surface.'
   version: 2.0.0
 security:
-  - BearerAuth: []
+- BearerAuth: []
 paths:
   /health:
     get:
       summary: Health check
       security: []
       responses:
-        "200": { description: OK }
+        '200':
+          description: OK
   /readiness:
     get:
       summary: Readiness check
       security: []
       responses:
-        "200": { description: Ready }
-        "503": { $ref: "#/components/responses/Error" }
+        '200':
+          description: Ready
+        '503':
+          $ref: '#/components/responses/Error'
   /v1/readyz:
     get:
       summary: Readiness check compatibility path.
       security: []
       responses:
-        "200": { description: Ready }
-        "503": { $ref: "#/components/responses/Error" }
+        '200':
+          description: Ready
+        '503':
+          $ref: '#/components/responses/Error'
   /metrics:
     get:
       summary: Prometheus text metrics.
       security: []
       responses:
-        "200":
+        '200':
           description: Metrics in Prometheus text format
           content:
             text/plain:
-              schema: { type: string }
+              schema:
+                type: string
   /v1/sandbox/capabilities:
     x-api-layer: advanced
     get:
-      summary: Get runtime capabilities, profiles, supported task types, languages, state policies, and queue limits.
+      summary: Get runtime capabilities, profiles, supported task types, languages,
+        state policies, and queue limits.
       responses:
-        "200":
+        '200':
           description: Capabilities
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/RuntimeCapabilities" }
+              schema:
+                $ref: '#/components/schemas/RuntimeCapabilities'
   /v1/runtime-profiles:
     x-api-layer: advanced
     get:
-      summary: List visible runtime profiles (Advanced; exposes image/runtime internals). Public clients use /v1/environment/catalog.
+      summary: List visible runtime profiles (Advanced; exposes image/runtime internals).
+        Public clients use /v1/environment/catalog.
       responses:
-        "200":
+        '200':
           description: Runtime profiles
           content:
             application/json:
               schema:
                 type: array
-                items: { $ref: "#/components/schemas/RuntimeProfile" }
+                items:
+                  $ref: '#/components/schemas/RuntimeProfile'
   /v1/environment/catalog:
     get:
       operationId: getEnvironmentCatalog
-      summary: Public profile catalog with capability vocabulary and behavior limits. Supports ETag conditional requests.
+      summary: Public profile catalog with capability vocabulary and behavior limits.
+        Supports ETag conditional requests.
       parameters:
-        - name: limit
-          in: query
-          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
-        - name: offset
-          in: query
-          schema: { type: integer, minimum: 0, default: 0 }
-        - name: capability
-          in: query
-          required: false
-          description: Comma-separated capability filter (AND semantics; a card must expose all listed capabilities).
-          schema: { type: string, example: "runtime.python,tool.pdf" }
-        - name: tag
-          in: query
-          required: false
-          description: Comma-separated tag filter (OR semantics; a card matching any listed tag is kept).
-          schema: { type: string, example: "ml,data" }
-        - name: If-None-Match
-          in: header
-          required: false
-          schema: { type: string }
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - name: capability
+        in: query
+        required: false
+        description: Comma-separated capability filter (AND semantics; a card must
+          expose all listed capabilities).
+        schema:
+          type: string
+          example: runtime.python,tool.pdf
+      - name: tag
+        in: query
+        required: false
+        description: Comma-separated tag filter (OR semantics; a card matching any
+          listed tag is kept).
+        schema:
+          type: string
+          example: ml,data
+      - name: If-None-Match
+        in: header
+        required: false
+        schema:
+          type: string
       responses:
-        "200":
+        '200':
           description: Catalog cards visible to the principal
           headers:
             ETag:
-              schema: { type: string }
+              schema:
+                type: string
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/EnvironmentCatalog" }
-        "304": { description: Not modified }
+              schema:
+                $ref: '#/components/schemas/EnvironmentCatalog'
+        '304':
+          description: Not modified
   /v1/environment:resolve:
     post:
       operationId: resolveEnvironment
-      summary: Resolve an EnvironmentSelector into a resolution ticket (default TTL 30 minutes, usable multiple times within TTL, not consumed on use).
+      summary: Resolve an EnvironmentSelector into a resolution ticket (default TTL
+        30 minutes, usable multiple times within TTL, not consumed on use).
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: "#/components/schemas/ResolveEnvironmentRequest" }
+            schema:
+              $ref: '#/components/schemas/ResolveEnvironmentRequest'
       responses:
-        "200":
+        '200':
           description: Environment resolution ticket
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/EnvironmentResolution" }
-        "400": { $ref: "#/components/responses/Error" }
-        "404": { $ref: "#/components/responses/Error" }
-        "422": { $ref: "#/components/responses/Error" }
+              schema:
+                $ref: '#/components/schemas/EnvironmentResolution'
+        '400':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '422':
+          $ref: '#/components/responses/Error'
   /v1/sandboxes:lease:
     x-api-layer: advanced
     post:
@@ -123,203 +156,281 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: "#/components/schemas/LeaseRequest" }
+            schema:
+              $ref: '#/components/schemas/LeaseRequest'
       responses:
-        "200":
+        '200':
           description: Sandbox lease
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/SandboxLease" }
-        "403": { $ref: "#/components/responses/Error" }
-        "503": { $ref: "#/components/responses/Error" }
+              schema:
+                $ref: '#/components/schemas/SandboxLease'
+        '403':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
   /v1/jobs:
     get:
       operationId: listJobs
       summary: List jobs for the authenticated tenant.
       parameters:
-        - name: status
-          in: query
-          schema: { type: string, enum: [queued, running, succeeded, failed, cancelled, timed_out] }
-        - name: limit
-          in: query
-          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
-        - name: offset
-          in: query
-          schema: { type: integer, minimum: 0, default: 0 }
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - queued
+          - running
+          - succeeded
+          - failed
+          - cancelled
+          - timed_out
+          - interrupted
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
       responses:
-        "200":
+        '200':
           description: Paged job records
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/JobList" }
+              schema:
+                $ref: '#/components/schemas/JobList'
     post:
       operationId: submitJob
-      summary: Submit a job. Returns immediately unless ?wait is given; on wait expiry returns 200 with status=running and logs_url (not an error).
+      summary: Submit a job. Returns immediately unless ?wait is given; on wait expiry
+        returns 200 with status=running and logs_url (not an error).
       parameters:
-        - name: wait
-          in: query
-          required: false
-          description: Max duration to wait synchronously for completion, e.g. 30s. Bounded by server config.
-          schema: { type: string, example: 30s }
+      - name: wait
+        in: query
+        required: false
+        description: Max duration to wait synchronously for completion, e.g. 30s.
+          Bounded by server config.
+        schema:
+          type: string
+          example: 30s
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: "#/components/schemas/SubmitJobRequest" }
+            schema:
+              $ref: '#/components/schemas/SubmitJobRequest'
       responses:
-        "202":
-          description: Job admitted and returned in queued or running state. Poll the job resource or consume logs_url.
+        '202':
+          description: Job admitted and returned in queued or running state. Poll
+            the job resource or consume logs_url.
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/JobResult" }
-        "200":
-          description: Returned only when ?wait is supplied; may be terminal or still running when the wait bound expires.
+              schema:
+                $ref: '#/components/schemas/JobResult'
+        '200':
+          description: Returned only when ?wait is supplied; may be terminal or still
+            running when the wait bound expires.
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/JobResult" }
-        "429": { $ref: "#/components/responses/Error" }
-        "503": { $ref: "#/components/responses/Error" }
+              schema:
+                $ref: '#/components/schemas/JobResult'
+        '429':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
   /v1/audits:
     get:
       operationId: listAuditEvents
       summary: List audit events for the authenticated tenant.
       parameters:
-        - name: principal_id
-          in: query
-          schema: { type: string }
-        - name: key_id
-          in: query
-          schema: { type: string }
-        - name: action
-          in: query
-          schema: { type: string }
-        - name: resource_type
-          in: query
-          schema: { type: string }
-        - name: resource_id
-          in: query
-          schema: { type: string }
-        - name: limit
-          in: query
-          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
-        - name: offset
-          in: query
-          schema: { type: integer, minimum: 0, default: 0 }
+      - name: principal_id
+        in: query
+        schema:
+          type: string
+      - name: key_id
+        in: query
+        schema:
+          type: string
+      - name: action
+        in: query
+        schema:
+          type: string
+      - name: resource_type
+        in: query
+        schema:
+          type: string
+      - name: resource_id
+        in: query
+        schema:
+          type: string
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
       responses:
-        "200":
+        '200':
           description: Paged audit events
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/AuditEventList" }
+              schema:
+                $ref: '#/components/schemas/AuditEventList'
   /v1/sandboxes:
     x-api-layer: advanced
     get:
       summary: List sandbox leases for the authenticated tenant.
       responses:
-        "200":
+        '200':
           description: Sandbox leases
           content:
             application/json:
               schema:
                 type: array
-                items: { $ref: "#/components/schemas/SandboxLease" }
+                items:
+                  $ref: '#/components/schemas/SandboxLease'
   /v1/jobs/{id}:
     get:
       operationId: getJob
       summary: Get a job result.
       parameters:
-        - $ref: "#/components/parameters/ID"
+      - $ref: '#/components/parameters/ID'
       responses:
-        "200":
+        '200':
           description: Job result
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/JobResult" }
-        "404": { $ref: "#/components/responses/Error" }
+              schema:
+                $ref: '#/components/schemas/JobResult'
+        '404':
+          $ref: '#/components/responses/Error'
   /v1/jobs/{id}:cancel:
     post:
       operationId: cancelJob
-      summary: Cancel a queued or running job. Cancel is not delete; the job record remains queryable.
+      summary: Cancel a queued or running job. Cancel is not delete; the job record
+        remains queryable.
       parameters:
-        - $ref: "#/components/parameters/ID"
+      - $ref: '#/components/parameters/ID'
       responses:
-        "200": { description: Cancelled }
-        "404": { $ref: "#/components/responses/Error" }
+        '200':
+          description: Cancelled
+        '404':
+          $ref: '#/components/responses/Error'
   /v1/jobs/{id}/logs:
     get:
       operationId: streamJobLogs
       summary: Stream job logs via SSE.
       parameters:
-        - $ref: "#/components/parameters/ID"
-        - name: cursor
-          in: query
-          schema: { type: integer, minimum: 0, default: 0 }
+      - $ref: '#/components/parameters/ID'
+      - name: cursor
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
       responses:
-        "200": { description: SSE log stream }
+        '200':
+          description: SSE log stream
   /v1/jobs/{id}/files:
     post:
       operationId: uploadJobFile
-      summary: Upload an input file for a job. The file name is passed by query parameter `name` and the body is raw bytes.
+      summary: Upload an input file for a job. The file name is passed by query parameter
+        `name` and the body is raw bytes.
       parameters:
-        - $ref: "#/components/parameters/ID"
-        - name: name
-          in: query
-          required: true
-          schema: { type: string }
+      - $ref: '#/components/parameters/ID'
+      - name: name
+        in: query
+        required: true
+        schema:
+          type: string
       requestBody:
         required: true
         content:
           application/octet-stream:
-            schema: { type: string, format: binary }
+            schema:
+              type: string
+              format: binary
       responses:
-        "201":
+        '201':
           description: Artifact manifest
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/Artifact" }
+              schema:
+                $ref: '#/components/schemas/Artifact'
   /v1/jobs/{id}/artifacts:
     get:
       operationId: listJobArtifacts
       summary: List job artifacts.
       parameters:
-        - $ref: "#/components/parameters/ID"
-        - name: offset
-          in: query
-          schema: { type: integer, minimum: 0, default: 0 }
-        - name: limit
-          in: query
-          schema: { type: integer, minimum: 1, maximum: 1000 }
+      - $ref: '#/components/parameters/ID'
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000
       responses:
-        "200":
+        '200':
           description: Artifacts
           headers:
             X-Total-Count:
-              schema: { type: integer }
+              schema:
+                type: integer
             X-Next-Offset:
-              schema: { type: integer }
+              schema:
+                type: integer
           content:
             application/json:
               schema:
                 type: array
-                items: { $ref: "#/components/schemas/Artifact" }
+                items:
+                  $ref: '#/components/schemas/Artifact'
   /v1/artifacts/{id}:
     get:
       operationId: downloadArtifact
       summary: Download an artifact by id. Supports HTTP Range or text offset/limit.
       parameters:
-        - $ref: "#/components/parameters/ID"
-        - name: Range
-          in: header
-          schema: { type: string, example: bytes=0-1023 }
-        - name: offset
-          in: query
-          schema: { type: integer, minimum: 0 }
-        - name: limit
-          in: query
-          schema: { type: integer, minimum: 1, maximum: 1000 }
+      - $ref: '#/components/parameters/ID'
+      - name: Range
+        in: header
+        schema:
+          type: string
+          example: bytes=0-1023
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000
       responses:
-        "200": { description: Artifact bytes }
-        "404": { $ref: "#/components/responses/Error" }
+        '200':
+          description: Artifact bytes
+        '404':
+          $ref: '#/components/responses/Error'
   /v1/workspaces:
     post:
       summary: Create a workspace state key.
@@ -327,366 +438,865 @@ paths:
         required: false
         content:
           application/json:
-            schema: { $ref: "#/components/schemas/CreateWorkspaceRequest" }
+            schema:
+              $ref: '#/components/schemas/CreateWorkspaceRequest'
       responses:
-        "201":
+        '201':
           description: Workspace
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/Workspace" }
+              schema:
+                $ref: '#/components/schemas/Workspace'
+  /v1/storage-resources/{storageRef}/{resourceID}:
+    get:
+      summary: Inspect an administrator-approved persistent storage resource.
+      parameters:
+      - name: storageRef
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: resourceID
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: Authenticated source identity and verified hard quota; attachment
+            capability is reported separately.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SharedStorageResource'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
   /v1/workspaces/{id}:
     get:
       summary: Get a workspace.
       parameters:
-        - $ref: "#/components/parameters/ID"
+      - $ref: '#/components/parameters/ID'
       responses:
-        "200":
+        '200':
           description: Workspace
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/Workspace" }
+              schema:
+                $ref: '#/components/schemas/Workspace'
     delete:
       summary: Delete a workspace and local artifacts.
       parameters:
-        - $ref: "#/components/parameters/ID"
+      - $ref: '#/components/parameters/ID'
       responses:
-        "200": { description: Deleted }
+        '200':
+          description: Deleted
+  /v1/workspaces/{id}/lifecycle:
+    post:
+      operationId: controlWorkspaceLifecycle
+      summary: Bounded persistent storage hold or parent terminal retention; never
+        acquires computation.
+      description: Requires sandbox.workspace.lifecycle scope and authenticated workspace
+        owner. Disabled by default. Send mutation once; after an unknown response
+        query the original operation, never replay. Request digest is lowercase SHA256
+        of compact UTF8 sorted-key JSON with all six request fields, zero omitted
+        integers restored as zero, absent terminal_at as null, terminal_at normalized
+        to UTC with exactly six fractional digits and Z. Nanosecond precision is rejected.
+      parameters:
+      - $ref: '#/components/parameters/ID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkspaceLifecycleRequest'
+      responses:
+        '200':
+          description: Original storage lifecycle receipt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceLifecycleReceipt'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
+  /v1/workspaces/{id}/lifecycle:lookup:
+    get:
+      operationId: lookupWorkspaceLifecycle
+      summary: Read-only original lifecycle operation lookup.
+      description: Unknown or history_expired never proves that a mutation did not
+        execute. Bounded receipts and irreversible operation tombstones prevent replay.
+      parameters:
+      - $ref: '#/components/parameters/ID'
+      - name: operation_id
+        in: query
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 128
+          pattern: ^[A-Za-z0-9_.-]+$
+      responses:
+        '200':
+          description: Original operation facts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceLifecycleLookup'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
   /v1/sessions:
     post:
       operationId: createSession
-      summary: Create a logical session backed by a persistent workspace. No runtime is created until the first exec.
+      summary: Create a logical session backed by a persistent workspace. No runtime
+        is created until the first exec.
       requestBody:
         required: false
         content:
           application/json:
-            schema: { $ref: "#/components/schemas/CreateSessionRequest" }
+            schema:
+              $ref: '#/components/schemas/CreateSessionRequest'
       responses:
-        "201":
+        '201':
           description: Session
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/Session" }
+              schema:
+                $ref: '#/components/schemas/Session'
+  /v1/sessions:lookup:
+    get:
+      operationId: lookupSessionByOperation
+      summary: Find a session by its creation idempotency key, scoped to the authenticated
+        tenant and user.
+      parameters:
+      - name: idempotency_key
+        in: query
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Maximum 128 UTF-8 bytes.
+      responses:
+        '200':
+          description: Session
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '404':
+          $ref: '#/components/responses/Error'
   /v1/sessions/{id}:
     get:
       operationId: getSession
       summary: Get a session.
       parameters:
-        - $ref: "#/components/parameters/ID"
+      - $ref: '#/components/parameters/ID'
       responses:
-        "200":
+        '200':
           description: Session
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/Session" }
+              schema:
+                $ref: '#/components/schemas/Session'
     delete:
       operationId: deleteSession
-      summary: Delete the logical session and release its active runtime. Workspace retention is handled separately.
+      summary: Delete the logical session and release its active runtime. Workspace
+        retention is handled separately.
       parameters:
-        - $ref: "#/components/parameters/ID"
+      - $ref: '#/components/parameters/ID'
       responses:
-        "200": { description: Deleted }
+        '200':
+          description: Deleted
+  /v1/sessions/{id}/workspace-view:
+    get:
+      operationId: getWorkspaceView
+      summary: Get actual authenticated runtime, quota and projection facts.
+      parameters:
+      - $ref: '#/components/parameters/ID'
+      responses:
+        '200':
+          description: Confirmed result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceViewFacts'
+        default:
+          $ref: '#/components/responses/Error'
+    post:
+      operationId: prepareOrSealWorkspaceView
+      summary: Prepare trusted projection or irreversibly seal input and payload.
+        Active executions reject changes.
+      parameters:
+      - $ref: '#/components/parameters/ID'
+      - name: action
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - prepare
+          - seal
+      requestBody:
+        description: Required for prepare; seal has no request body.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkspacePreparationRequest'
+      responses:
+        '200':
+          description: Immutable original preparation receipt, or sealed facts.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - $ref: '#/components/schemas/WorkspacePreparationReceipt'
+                - $ref: '#/components/schemas/WorkspaceViewFacts'
+        default:
+          $ref: '#/components/responses/Error'
+  /v1/sessions/{id}/workspace-view/preparations/{operationID}:
+    get:
+      operationId: lookupWorkspacePreparation
+      summary: Read the original durable preparation proof without runtime mutation
+        or renewal.
+      parameters:
+      - $ref: '#/components/parameters/ID'
+      - name: operationID
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: ^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$
+      - name: request_digest
+        in: query
+        required: true
+        schema:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+      responses:
+        '200':
+          description: Original unknown intent or immutable completed proof.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspacePreparationReceipt'
+        '404':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
+  /v1/sessions/{id}/ownership:
+    get:
+      operationId: getSessionOwnership
+      summary: Read ownership for original cleanup without granting logs, files or
+        compute access.
+      parameters:
+      - $ref: '#/components/parameters/ID'
+      responses:
+        '200':
+          description: Original ownership, independent of compute TTL.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionOwnership'
+        default:
+          $ref: '#/components/responses/Error'
+  /v1/sessions/{id}/history:
+    get:
+      operationId: getSessionHistory
+      summary: Read retained authenticated ownership without renewing execution permission.
+      parameters:
+      - $ref: '#/components/parameters/ID'
+      responses:
+        '200':
+          description: Confirmed result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        default:
+          $ref: '#/components/responses/Error'
+  /v1/sessions/{id}/workspace:purge:
+    post:
+      operationId: purgeSessionWorkspace
+      summary: Delete stopped workspace while retaining execution logs and ownership.
+      parameters:
+      - $ref: '#/components/parameters/ID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkspacePreparationRequest'
+      responses:
+        '200':
+          description: Confirmed result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspacePurgeReceipt'
+        default:
+          $ref: '#/components/responses/Error'
+  /v1/workspaces/{id}/purges/{operationID}:
+    get:
+      operationId: lookupStoragePurge
+      summary: Read the immutable original storage deletion proof independent of compute
+        TTL.
+      parameters:
+      - $ref: '#/components/parameters/ID'
+      - name: operationID
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: request_digest
+        in: query
+        required: true
+        schema:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+      responses:
+        '200':
+          description: Original proof for authenticated tenant, user and principal.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspacePurgeReceipt'
+        default:
+          $ref: '#/components/responses/Error'
+  /v1/sessions/{id}/workspace/purges/{operationID}:
+    get:
+      operationId: lookupWorkspacePurge
+      summary: Read the original purge ledger without restarting deletion.
+      parameters:
+      - $ref: '#/components/parameters/ID'
+      - name: operationID
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: request_digest
+        in: query
+        required: true
+        schema:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+      responses:
+        '200':
+          description: Original result, unknown is not safe to replay.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspacePurgeReceipt'
+        default:
+          $ref: '#/components/responses/Error'
+  /v1/workspaces/{id}/maintenance-proof:query:
+    post:
+      operationId: queryWorkspaceMaintenanceProof
+      summary: 在原来源管理身份下只读查询完整停止闭包与真实叶身份，不执行、停止或重试原命令。
+      parameters:
+      - $ref: '#/components/parameters/ID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaintenanceProofQuery'
+      responses:
+        '200':
+          description: 原授权来源及调用停止证明。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MaintenanceSourceProof'
+        default:
+          $ref: '#/components/responses/Error'
   /v1/sessions/{id}:renew:
     post:
       operationId: renewSession
       summary: Extend a session lease (client heartbeat) within max lifetime policy.
       parameters:
-        - $ref: "#/components/parameters/ID"
+      - $ref: '#/components/parameters/ID'
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: "#/components/schemas/RenewRequest" }
+            schema:
+              $ref: '#/components/schemas/RenewRequest'
       responses:
-        "200":
+        '200':
           description: Renewed session
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/Session" }
-        "409": { $ref: "#/components/responses/Error" }
+              schema:
+                $ref: '#/components/schemas/Session'
+        '409':
+          $ref: '#/components/responses/Error'
   /v1/sessions/{id}:suspend:
     post:
       operationId: suspendSession
-      summary: Release the ephemeral runtime while preserving the logical session and workspace.
+      summary: Release the ephemeral runtime while preserving the logical session
+        and workspace.
       parameters:
-        - $ref: "#/components/parameters/ID"
-        - name: force
-          in: query
-          required: false
-          description: When true, cancel all running execs before suspending.
-          schema: { type: boolean, default: false }
+      - $ref: '#/components/parameters/ID'
+      - name: force
+        in: query
+        required: false
+        description: When true, cancel all running execs before suspending.
+        schema:
+          type: boolean
+          default: false
       responses:
-        "200":
+        '200':
           description: Dormant session
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/Session" }
-        "409": { $ref: "#/components/responses/Error" }
+              schema:
+                $ref: '#/components/schemas/Session'
+        '409':
+          $ref: '#/components/responses/Error'
+  /v1/sessions/{id}:resume:
+    post:
+      operationId: resumeSession
+      summary: Resume a named session runtime
+      description: Recreates or validates the short-lived runtime for an active logical
+        session and returns its current runtime binding. The durable workspace and
+        session identity are preserved.
+      parameters:
+      - $ref: '#/components/parameters/ID'
+      responses:
+        '200':
+          description: Session runtime is active.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '404':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        '503':
+          $ref: '#/components/responses/Error'
   /v1/sessions/{id}/exec:
     post:
       operationId: execSession
-      summary: Synchronous exec inside a named session (short commands < 30s). Returns ExecRecord with stdout/stderr inline.
+      summary: Synchronous exec inside a named session (short commands < 30s). Returns
+        ExecRecord with stdout/stderr inline.
       parameters:
-        - $ref: "#/components/parameters/ID"
+      - $ref: '#/components/parameters/ID'
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: "#/components/schemas/ExecSessionRequest" }
+            schema:
+              $ref: '#/components/schemas/ExecSessionRequest'
       responses:
-        "200":
+        '200':
           description: Session execution result (ExecRecord with stdout/stderr inline)
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/ExecRecord" }
+              schema:
+                $ref: '#/components/schemas/ExecRecord'
   /v1/sessions/{id}/exec:async:
     post:
       operationId: execSessionAsync
-      summary: Asynchronous exec. Returns immediately with exec_id; use logs endpoint for SSE streaming.
+      summary: Asynchronous exec. Returns immediately with exec_id; use logs endpoint
+        for SSE streaming.
       parameters:
-        - $ref: "#/components/parameters/ID"
+      - $ref: '#/components/parameters/ID'
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: "#/components/schemas/AsyncExecRequest" }
+            schema:
+              $ref: '#/components/schemas/AsyncExecRequest'
       responses:
-        "201":
+        '201':
           description: Exec record (status=queued)
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/ExecRecord" }
-        "429": { $ref: "#/components/responses/Error" }
+              schema:
+                $ref: '#/components/schemas/ExecRecord'
+        '429':
+          $ref: '#/components/responses/Error'
   /v1/sessions/{id}/execs:
     get:
       operationId: listSessionExecs
       summary: List exec records for a session.
       parameters:
-        - $ref: "#/components/parameters/ID"
-        - name: limit
-          in: query
-          schema: { type: integer, minimum: 1, maximum: 100, default: 50 }
-        - name: cursor
-          in: query
-          schema: { type: string }
+      - $ref: '#/components/parameters/ID'
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+      - name: cursor
+        in: query
+        schema:
+          type: string
       responses:
-        "200":
+        '200':
           description: Exec record list
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/ExecRecordList" }
+              schema:
+                $ref: '#/components/schemas/ExecRecordList'
+  /v1/sessions/{id}/execs:lookup:
+    get:
+      operationId: lookupExecByOperation
+      summary: Find an exec by a stable caller operation ID within the authenticated
+        session.
+      parameters:
+      - $ref: '#/components/parameters/ID'
+      - name: operation_id
+        in: query
+        required: true
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 256
+      responses:
+        '200':
+          description: Exec record
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecRecord'
+        '404':
+          $ref: '#/components/responses/Error'
   /v1/sessions/{id}/execs/{execId}:
     get:
       operationId: getExecRecord
       summary: Get a single exec record by ID.
       parameters:
-        - $ref: "#/components/parameters/ID"
-        - name: execId
-          in: path
-          required: true
-          schema: { type: string }
+      - $ref: '#/components/parameters/ID'
+      - name: execId
+        in: path
+        required: true
+        schema:
+          type: string
       responses:
-        "200":
+        '200':
           description: Exec record
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/ExecRecord" }
-        "404": { $ref: "#/components/responses/Error" }
+              schema:
+                $ref: '#/components/schemas/ExecRecord'
+        '404':
+          $ref: '#/components/responses/Error'
   /v1/sessions/{id}/execs/{execId}/logs:
     get:
       operationId: streamExecLogs
-      summary: SSE log stream for an async exec. Supports cursor-based reconnection via Last-Event-ID header or ?cursor param.
+      summary: SSE log stream for an async exec. Supports cursor-based reconnection
+        via Last-Event-ID header or ?cursor param.
       parameters:
-        - $ref: "#/components/parameters/ID"
-        - name: execId
-          in: path
-          required: true
-          schema: { type: string }
-        - name: cursor
-          in: query
-          required: false
-          schema: { type: integer, format: int64, minimum: 0, default: 0 }
-        - name: Last-Event-ID
-          in: header
-          required: false
-          schema: { type: string }
+      - $ref: '#/components/parameters/ID'
+      - name: execId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: cursor
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int64
+          minimum: 0
+          default: 0
+      - name: Last-Event-ID
+        in: header
+        required: false
+        schema:
+          type: string
       responses:
-        "200":
-          description: SSE event stream (stdout/stderr/status/truncated events with monotonic cursor as id field)
+        '200':
+          description: SSE event stream (stdout/stderr/status/truncated events with
+            monotonic cursor as id field)
           content:
             text/event-stream:
-              schema: { type: string }
-        "404": { $ref: "#/components/responses/Error" }
+              schema:
+                type: string
+        '404':
+          $ref: '#/components/responses/Error'
   /v1/sessions/{id}/execs/{execId}:cancel:
     post:
       operationId: cancelExec
-      summary: Cancel a running or queued exec (SIGINT → grace → SIGKILL). Record is preserved for query.
+      summary: Cancel a running or queued exec (SIGINT → grace → SIGKILL). Record
+        is preserved for query.
       parameters:
-        - $ref: "#/components/parameters/ID"
-        - name: execId
-          in: path
-          required: true
-          schema: { type: string }
+      - $ref: '#/components/parameters/ID'
+      - name: execId
+        in: path
+        required: true
+        schema:
+          type: string
       responses:
-        "200":
+        '200':
           description: Updated exec record (status=cancelled)
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/ExecRecord" }
-        "404": { $ref: "#/components/responses/Error" }
+              schema:
+                $ref: '#/components/schemas/ExecRecord'
+        '404':
+          $ref: '#/components/responses/Error'
   /v1/sessions/{id}/context:
     get:
       operationId: getSessionContext
-      summary: Get session execution context (cwd + env).
+      summary: Get persistent session execution context (cwd only).
       parameters:
-        - $ref: "#/components/parameters/ID"
+      - $ref: '#/components/parameters/ID'
       responses:
-        "200":
+        '200':
           description: Session context
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/SessionContext" }
+              schema:
+                $ref: '#/components/schemas/SessionContext'
     patch:
       operationId: patchSessionContext
       summary: Update session execution context. cwd must be under /workspace.
       parameters:
-        - $ref: "#/components/parameters/ID"
+      - $ref: '#/components/parameters/ID'
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: "#/components/schemas/SessionContext" }
+            schema:
+              $ref: '#/components/schemas/SessionContext'
       responses:
-        "200":
+        '200':
           description: Updated session context
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/SessionContext" }
-        "400": { $ref: "#/components/responses/Error" }
+              schema:
+                $ref: '#/components/schemas/SessionContext'
+        '400':
+          $ref: '#/components/responses/Error'
   /v1/sessions/{id}/files:
     get:
       operationId: downloadSessionFile
       summary: Download a file from a session workspace.
       parameters:
-        - $ref: "#/components/parameters/ID"
-        - name: path
-          in: query
-          required: true
-          schema: { type: string }
+      - $ref: '#/components/parameters/ID'
+      - name: path
+        in: query
+        required: true
+        schema:
+          type: string
       responses:
-        "200":
+        '200':
           description: File content
           content:
             application/octet-stream:
-              schema: { type: string, format: binary }
-        default: { $ref: "#/components/responses/Error" }
+              schema:
+                type: string
+                format: binary
+        default:
+          $ref: '#/components/responses/Error'
     put:
       operationId: uploadSessionFile
       summary: Upload or overwrite a file in a session workspace.
       parameters:
-        - $ref: "#/components/parameters/ID"
-        - name: path
-          in: query
-          required: true
-          schema: { type: string }
-        - name: If-Match
-          in: header
-          required: false
-          description: Replace only when the current SHA-256 ETag matches.
-          schema: { type: string }
-        - name: If-None-Match
-          in: header
-          required: false
-          description: Use `*` to create only when the file does not exist.
-          schema: { type: string, enum: ["*"] }
+      - $ref: '#/components/parameters/ID'
+      - name: path
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: If-Match
+        in: header
+        required: false
+        description: Replace only when the current SHA-256 ETag matches.
+        schema:
+          type: string
+      - name: If-None-Match
+        in: header
+        required: false
+        description: Use `*` to create only when the file does not exist.
+        schema:
+          type: string
+          enum:
+          - '*'
       requestBody:
         required: true
         content:
           application/octet-stream:
-            schema: { type: string, format: binary }
+            schema:
+              type: string
+              format: binary
       responses:
-        "200":
+        '200':
           description: File metadata
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/WorkspaceFileInfo" }
-        "403": { $ref: "#/components/responses/Error" }
-        "409": { $ref: "#/components/responses/Error" }
-        default: { $ref: "#/components/responses/Error" }
+              schema:
+                $ref: '#/components/schemas/WorkspaceFileInfo'
+        '403':
+          $ref: '#/components/responses/Error'
+        '409':
+          $ref: '#/components/responses/Error'
+        default:
+          $ref: '#/components/responses/Error'
     delete:
       operationId: removeSessionFile
       summary: Remove a file or directory from a session workspace.
       parameters:
-        - $ref: "#/components/parameters/ID"
-        - name: path
-          in: query
-          required: true
-          schema: { type: string }
-        - name: recursive
-          in: query
-          required: false
-          schema: { type: boolean, default: false }
+      - $ref: '#/components/parameters/ID'
+      - name: path
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: recursive
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+      - name: If-Match
+        in: header
+        schema:
+          type: string
+        description: Exact content hash for atomic conditional deletion.
       responses:
-        "200": { description: Removed }
-        default: { $ref: "#/components/responses/Error" }
+        '200':
+          description: Removed
+        default:
+          $ref: '#/components/responses/Error'
   /v1/sessions/{id}/files:list:
     get:
       operationId: listSessionFiles
       summary: List session workspace files.
       parameters:
-        - $ref: "#/components/parameters/ID"
-        - name: path
-          in: query
-          required: false
-          schema: { type: string, default: "." }
-        - name: recursive
-          in: query
-          required: false
-          schema: { type: boolean, default: false }
-        - name: limit
-          in: query
-          required: false
-          schema: { type: integer, minimum: 1, default: 1000 }
+      - $ref: '#/components/parameters/ID'
+      - name: path
+        in: query
+        required: false
+        schema:
+          type: string
+          default: .
+      - name: recursive
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          default: 1000
+      - name: offset
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
       responses:
-        "200":
+        '200':
           description: File list
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/WorkspaceListResult" }
-        default: { $ref: "#/components/responses/Error" }
+              schema:
+                $ref: '#/components/schemas/WorkspaceListResult'
+        default:
+          $ref: '#/components/responses/Error'
   /v1/sessions/{id}/files:stat:
     get:
       operationId: statSessionFile
       summary: Stat a session workspace file or directory.
       parameters:
-        - $ref: "#/components/parameters/ID"
-        - name: path
-          in: query
-          required: false
-          schema: { type: string, default: "." }
+      - $ref: '#/components/parameters/ID'
+      - name: path
+        in: query
+        required: false
+        schema:
+          type: string
+          default: .
       responses:
-        "200":
+        '200':
           description: File metadata
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/WorkspaceFileInfo" }
-        default: { $ref: "#/components/responses/Error" }
+              schema:
+                $ref: '#/components/schemas/WorkspaceFileInfo'
+        default:
+          $ref: '#/components/responses/Error'
+  /v1/sessions/{id}/files:executable:
+    patch:
+      operationId: setSessionFileExecutable
+      summary: Change executable metadata of a regular file on Linux.
+      parameters:
+      - $ref: '#/components/parameters/ID'
+      - name: path
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: If-Match
+        in: header
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+              - executable
+              properties:
+                executable:
+                  type: boolean
+                expected_executable:
+                  type: boolean
+      responses:
+        '200':
+          description: Updated file metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceFileInfo'
+        default:
+          $ref: '#/components/responses/Error'
   /v1/sessions/{id}/dirs:
     post:
       operationId: mkdirSessionDir
       summary: Create a directory in a session workspace.
       parameters:
-        - $ref: "#/components/parameters/ID"
-        - name: path
-          in: query
-          required: true
-          schema: { type: string }
+      - $ref: '#/components/parameters/ID'
+      - name: path
+        in: query
+        required: true
+        schema:
+          type: string
       responses:
-        "200":
+        '200':
           description: Directory metadata
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/WorkspaceFileInfo" }
-        default: { $ref: "#/components/responses/Error" }
+              schema:
+                $ref: '#/components/schemas/WorkspaceFileInfo'
+        default:
+          $ref: '#/components/responses/Error'
   /v1/dependencies:build:
     post:
       operationId: buildDependencies
@@ -695,58 +1305,67 @@ paths:
         required: false
         content:
           application/json:
-            schema: { $ref: "#/components/schemas/BuildDependencyRequest" }
+            schema:
+              $ref: '#/components/schemas/BuildDependencyRequest'
       responses:
-        "200":
+        '200':
           description: Dependency build metadata
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/DependencyBuild" }
+              schema:
+                $ref: '#/components/schemas/DependencyBuild'
   /v1/dependencies/{id}:
     get:
       operationId: getDependencyBuild
       summary: Get dependency build metadata by fingerprint.
       parameters:
-        - $ref: "#/components/parameters/ID"
+      - $ref: '#/components/parameters/ID'
       responses:
-        "200":
+        '200':
           description: Dependency build metadata
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/DependencyBuild" }
+              schema:
+                $ref: '#/components/schemas/DependencyBuild'
   /v1/sandboxes/{id}:
     x-api-layer: advanced
     get:
       summary: Get sandbox lease/status/effective policy.
       parameters:
-        - $ref: "#/components/parameters/ID"
+      - $ref: '#/components/parameters/ID'
       responses:
-        "200":
+        '200':
           description: Sandbox lease. ETag is the resource_version.
           headers:
             ETag:
-              schema: { type: string }
+              schema:
+                type: string
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/SandboxLease" }
-        "404": { $ref: "#/components/responses/Error" }
+              schema:
+                $ref: '#/components/schemas/SandboxLease'
+        '404':
+          $ref: '#/components/responses/Error'
     delete:
       summary: Destroy a sandbox and remove its lease.
       parameters:
-        - $ref: "#/components/parameters/ID"
+      - $ref: '#/components/parameters/ID'
       responses:
-        "200": { description: Destroyed }
-        "404": { $ref: "#/components/responses/Error" }
+        '200':
+          description: Destroyed
+        '404':
+          $ref: '#/components/responses/Error'
   /v1/sandboxes/{id}/metadata:
     x-api-layer: advanced
     patch:
       summary: Patch sandbox metadata with If-Match resource_version precondition.
       parameters:
-        - $ref: "#/components/parameters/ID"
-        - name: If-Match
-          in: header
-          required: true
-          schema: { type: string }
+      - $ref: '#/components/parameters/ID'
+      - name: If-Match
+        in: header
+        required: true
+        schema:
+          type: string
       requestBody:
         required: true
         content:
@@ -756,134 +1375,150 @@ paths:
               additionalProperties:
                 nullable: true
       responses:
-        "200":
+        '200':
           description: Updated sandbox lease
           headers:
             ETag:
-              schema: { type: string }
+              schema:
+                type: string
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/SandboxLease" }
-        "409": { $ref: "#/components/responses/Error" }
+              schema:
+                $ref: '#/components/schemas/SandboxLease'
+        '409':
+          $ref: '#/components/responses/Error'
   /v1/sandboxes/{id}:release:
     x-api-layer: advanced
     post:
       summary: Release a sandbox lease (single canonical release verb).
       parameters:
-        - $ref: "#/components/parameters/ID"
+      - $ref: '#/components/parameters/ID'
       responses:
-        "200": { description: Released }
+        '200':
+          description: Released
   /v1/sandboxes/{id}:renew:
     x-api-layer: advanced
     post:
       summary: Extend an active sandbox lease within max lifetime policy.
       parameters:
-        - $ref: "#/components/parameters/ID"
+      - $ref: '#/components/parameters/ID'
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: "#/components/schemas/RenewRequest" }
+            schema:
+              $ref: '#/components/schemas/RenewRequest'
       responses:
-        "200":
+        '200':
           description: Renewed sandbox lease
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/SandboxLease" }
-        "409": { $ref: "#/components/responses/Error" }
+              schema:
+                $ref: '#/components/schemas/SandboxLease'
+        '409':
+          $ref: '#/components/responses/Error'
   /v1/sandboxes/{id}/sessions:
     x-api-layer: advanced
     post:
       summary: Execute inside a sandbox-scoped session.
       parameters:
-        - $ref: "#/components/parameters/ID"
+      - $ref: '#/components/parameters/ID'
       requestBody:
         required: true
         content:
           application/json:
-            schema: { $ref: "#/components/schemas/ExecSessionRequest" }
+            schema:
+              $ref: '#/components/schemas/ExecSessionRequest'
       responses:
-        "200":
+        '200':
           description: Session execution result
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/ExecSessionResult" }
+              schema:
+                $ref: '#/components/schemas/ExecSessionResult'
   /v1/sandboxes/{id}/snapshots:
     x-api-layer: advanced
     post:
       summary: Create a sandbox snapshot.
+      description: Reserved endpoint. Snapshot is currently unsupported and returns
+        POLICY_DENIED.
       parameters:
-        - $ref: "#/components/parameters/ID"
+      - $ref: '#/components/parameters/ID'
       responses:
-        "200":
-          description: Snapshot metadata
-          content:
-            application/json:
-              schema: { type: object }
+        '403':
+          $ref: '#/components/responses/Error'
   /v1/snapshots/{id}/restore:
     x-api-layer: advanced
     post:
-      summary: Restore a sandbox from a snapshot.
+      summary: Restore a sandbox from a snapshot (currently unsupported).
+      description: Reserved endpoint. Restore is currently unsupported and returns
+        POLICY_DENIED.
       parameters:
-        - $ref: "#/components/parameters/ID"
+      - $ref: '#/components/parameters/ID'
       responses:
-        "200":
-          description: Restored sandbox lease
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/SandboxLease" }
+        '403':
+          $ref: '#/components/responses/Error'
   /v1/sandboxes/{id}/viewer:
     get:
       summary: Get a lease-bound viewer descriptor for a GUI sandbox.
       parameters:
-        - $ref: "#/components/parameters/ID"
+      - $ref: '#/components/parameters/ID'
       responses:
-        "200":
+        '200':
           description: Viewer descriptor
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/ViewerDescriptor" }
-        "404": { $ref: "#/components/responses/Error" }
+              schema:
+                $ref: '#/components/schemas/ViewerDescriptor'
+        '404':
+          $ref: '#/components/responses/Error'
   /v1/sandboxes/{id}/gui:start:
     post:
       summary: Start the GUI/noVNC stack inside a GUI-capable sandbox.
       parameters:
-        - $ref: "#/components/parameters/ID"
+      - $ref: '#/components/parameters/ID'
       requestBody:
         required: false
         content:
           application/json:
-            schema: { $ref: "#/components/schemas/StartGUIRequest" }
+            schema:
+              $ref: '#/components/schemas/StartGUIRequest'
       responses:
-        "200":
+        '200':
           description: Viewer descriptor
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/ViewerDescriptor" }
+              schema:
+                $ref: '#/components/schemas/ViewerDescriptor'
   /v1/sandboxes/{id}/gui:stop:
     post:
       summary: Stop the GUI/noVNC stack inside a sandbox.
       parameters:
-        - $ref: "#/components/parameters/ID"
+      - $ref: '#/components/parameters/ID'
       responses:
-        "200": { description: GUI stopped }
+        '200':
+          description: GUI stopped
   /v1/sandboxes/{id}/viewer-proxy/{path}:
     get:
       summary: Authenticated reverse proxy to the sandbox viewer endpoint.
       security: []
       parameters:
-        - $ref: "#/components/parameters/ID"
-        - name: path
-          in: path
-          required: true
-          schema: { type: string }
-        - name: token
-          in: query
-          required: false
-          schema: { type: string }
+      - $ref: '#/components/parameters/ID'
+      - name: path
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: token
+        in: query
+        required: false
+        schema:
+          type: string
       responses:
-        "200": { description: Proxied noVNC asset or WebSocket upgrade }
-        "403": { $ref: "#/components/responses/Error" }
+        '200':
+          description: Proxied noVNC asset or WebSocket upgrade
+        '403':
+          $ref: '#/components/responses/Error'
 components:
   securitySchemes:
     BearerAuth:
@@ -894,697 +1529,2189 @@ components:
       name: id
       in: path
       required: true
-      schema: { type: string }
+      schema:
+        type: string
   responses:
     Error:
       description: Error response
       content:
         application/json:
-          schema: { $ref: "#/components/schemas/ErrorResponse" }
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
   schemas:
     EnvironmentSelector:
       type: object
-      description: >-
-        Unified environment selection. `profile` means an explicit environment name chosen by the
-        caller; `hints` means capability-based auto selection performed by the server; both absent
-        means the default public profile. `profile` and `hints` are mutually exclusive
-        (INVALID_SELECTOR when both present).
+      additionalProperties: false
+      description: Unified environment selection. `profile` means an explicit environment
+        name chosen by the caller; `hints` means capability-based auto selection performed
+        by the server; both absent means the default public profile. `profile` and
+        `hints` are mutually exclusive (INVALID_SELECTOR when both present).
       properties:
-        profile: { $ref: "#/components/schemas/ProfileReference" }
-        hints: { $ref: "#/components/schemas/EnvHints" }
+        profile:
+          $ref: '#/components/schemas/ProfileReference'
+        hints:
+          $ref: '#/components/schemas/EnvHints'
     ProfileReference:
       type: object
-      required: [name]
+      additionalProperties: false
+      required:
+      - name
       properties:
-        name: { type: string, example: office-basic }
-        revision: { type: string, description: "Optional pinned revision; defaults to latest." }
+        name:
+          type: string
+          example: office-basic
+        revision:
+          type: string
+          description: Optional pinned revision; defaults to latest.
     EnvHints:
       type: object
+      additionalProperties: false
       properties:
         capabilities:
           type: array
-          description: Namespaced capability tags (runtime.*, tool.*, document.*, browser.*).
-          items: { type: string, example: document.pdf }
+          description: Namespaced capability tags (runtime.*, tool.*, document.*,
+            browser.*).
+          items:
+            type: string
+            example: document.pdf
         strict:
           type: boolean
           default: false
-          description: When true, zero matches return NO_MATCHING_PROFILE instead of falling back to the default profile.
+          description: When true, zero matches return NO_MATCHING_PROFILE instead
+            of falling back to the default profile.
         description:
           type: string
           description: Audit-only free text; never consumed by the resolver.
     EffectiveEnvironment:
       type: object
-      description: Answers what was selected, why, and whether it was degraded. Never exposes image/runtime/host internals.
+      description: Answers what was selected, why, and whether it was degraded. Never
+        exposes image/runtime/host internals.
       properties:
-        profile_name: { type: string }
-        profile_revision: { type: string, description: Opaque server-generated revision string. }
-        selection_mode: { type: string, enum: [profile, auto] }
+        profile_name:
+          type: string
+        profile_revision:
+          type: string
+          description: Opaque server-generated revision string.
+        selection_mode:
+          type: string
+          enum:
+          - profile
+          - auto
         selection_reason:
           type: array
-          description: "Traceability, e.g. default fallback cause or unknown/unsatisfied capabilities."
-          items: { type: string }
+          description: Traceability, e.g. default fallback cause or unknown/unsatisfied
+            capabilities.
+          items:
+            type: string
         capabilities:
           type: array
-          items: { type: string }
-        degraded: { type: boolean, description: True only when the policy engine actively downgraded the request. }
+          items:
+            type: string
+        degraded:
+          type: boolean
+          description: True only when an approved policy/runtime fallback changed
+            the requested execution guarantee.
     ResolveEnvironmentRequest:
       type: object
-      required: [environment]
+      additionalProperties: false
+      required:
+      - environment
       properties:
-        environment: { $ref: "#/components/schemas/EnvironmentSelector" }
-        ttl_seconds: { type: integer, minimum: 60, description: "Requested ticket TTL; bounded by server config (default 30 minutes)." }
+        environment:
+          $ref: '#/components/schemas/EnvironmentSelector'
+        include_facts:
+          type: boolean
+          default: false
+          description: Request actual authenticated profile attestation; unavailable
+            enforcement fails closed.
+        ttl_seconds:
+          type: integer
+          minimum: 60
+          description: Requested ticket TTL; bounded by server config (default 30
+            minutes).
+    SessionOwnership:
+      type: object
+      additionalProperties: false
+      required:
+      - session_id
+      - workspace_id
+      - tenant_id
+      - principal_id
+      - user_id
+      - profile_revision
+      properties:
+        session_id:
+          type: string
+          minLength: 1
+        workspace_id:
+          type: string
+          minLength: 1
+        tenant_id:
+          type: string
+          minLength: 1
+        principal_id:
+          type: string
+          minLength: 1
+        user_id:
+          type: string
+          minLength: 1
+        profile_revision:
+          type: string
+          minLength: 1
+    WorkspacePurgeReceipt:
+      type: object
+      additionalProperties: false
+      required:
+      - operation_id
+      - request_digest
+      - status
+      - session_id
+      - workspace_id
+      - profile_revision
+      - tenant_id
+      - principal_id
+      - user_id
+      properties:
+        operation_id:
+          type: string
+        request_digest:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        status:
+          type: string
+          enum:
+          - unknown
+          - purged
+        session_id:
+          type: string
+        workspace_id:
+          type: string
+        profile_revision:
+          type: string
+        tenant_id:
+          type: string
+        principal_id:
+          type: string
+        user_id:
+          type: string
+    WorkspacePreparationRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - operation_id
+      - request_digest
+      properties:
+        operation_id:
+          type: string
+          pattern: ^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$
+        request_digest:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+    WorkspacePreparationReceipt:
+      type: object
+      additionalProperties: false
+      required:
+      - operation_id
+      - request_digest
+      - status
+      - session_id
+      - workspace_id
+      - sandbox_id
+      - profile_revision
+      - tenant_id
+      - principal_id
+      - user_id
+      properties:
+        operation_id:
+          type: string
+        request_digest:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        status:
+          type: string
+          enum:
+          - unknown
+          - prepared
+        session_id:
+          type: string
+        workspace_id:
+          type: string
+        sandbox_id:
+          type: string
+        profile_revision:
+          type: string
+        tenant_id:
+          type: string
+        principal_id:
+          type: string
+        user_id:
+          type: string
+        facts:
+          $ref: '#/components/schemas/WorkspaceViewFacts'
+    WorkspaceViewFacts:
+      type: object
+      required:
+      - os
+      - arch
+      - image_digest
+      - mechanisms
+      - resource_limits
+      - network_mode
+      - view_state
+      - runtime_versions
+      - runtime_executables
+      properties:
+        session_id:
+          type: string
+        workspace_id:
+          type: string
+        profile_revision:
+          type: string
+        os:
+          type: string
+        arch:
+          type: string
+        image_digest:
+          type: string
+        mechanisms:
+          type: array
+          items:
+            type: string
+        resource_limits:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int64
+            minimum: 1
+        runtime_versions:
+          type: object
+          additionalProperties:
+            type: string
+        runtime_executables:
+          type: object
+          additionalProperties:
+            type: string
+        network_mode:
+          type: string
+        view_state:
+          type: string
+          enum:
+          - unprepared
+          - prepared
+          - sealed
+        readonly_regions:
+          type: array
+          items:
+            type: string
     EnvironmentResolution:
       type: object
       properties:
-        resolution_id: { type: string }
-        profile_name: { type: string }
-        profile_revision: { type: string }
-        selection_mode: { type: string, enum: [profile, auto] }
+        facts:
+          $ref: '#/components/schemas/WorkspaceViewFacts'
+        resolution_id:
+          type: string
+        profile_name:
+          type: string
+        profile_revision:
+          type: string
+        selection_mode:
+          type: string
+          enum:
+          - profile
+          - auto
         selection_reason:
           type: array
-          items: { type: string }
+          items:
+            type: string
         capabilities:
           type: array
-          items: { type: string }
-        expires_at: { type: string, format: date-time }
+          items:
+            type: string
+        degraded:
+          type: boolean
+          description: True when policy approved a runtime fallback for this resolution.
+        expires_at:
+          type: string
+          format: date-time
     EnvironmentCatalog:
       type: object
       properties:
         items:
           type: array
-          items: { $ref: "#/components/schemas/CatalogCard" }
+          items:
+            $ref: '#/components/schemas/CatalogCard'
         capability_vocabulary:
           type: array
-          description: Full namespaced capability vocabulary recognized by the auto resolver.
-          items: { type: string }
-        default_profile: { type: string }
-        next_offset: { type: integer }
-        total: { type: integer }
+          description: Full namespaced capability vocabulary recognized by the auto
+            resolver.
+          items:
+            type: string
+        default_profile:
+          type: string
+        next_offset:
+          type: integer
+        total:
+          type: integer
     CatalogCard:
       type: object
-      required: [name, profile_revision]
+      required:
+      - name
+      - revision_available
       properties:
-        name: { type: string }
+        name:
+          type: string
         profile_revision:
           type: string
-          description: Opaque immutable revision for exact Resolve after Catalog selection.
-        display_name: { type: string }
-        description: { type: string }
+          description: Opaque immutable revision for exact Resolve after Catalog selection;
+            omitted while immutable image identity cannot be verified.
+        revision_available:
+          type: boolean
+          description: True only when this card carries a verified immutable profile
+            revision. When false, omit profile_revision and resolve by profile name
+            to pin the current image.
+        display_name:
+          type: string
+        description:
+          type: string
         capabilities:
           type: array
-          items: { type: string }
+          items:
+            type: string
         tags:
           type: array
-          items: { type: string }
+          items:
+            type: string
         use_when:
           type: array
           description: Display-only guidance; never consumed by the resolver.
-          items: { type: string }
+          items:
+            type: string
         avoid_when:
           type: array
           description: Display-only guidance; never consumed by the resolver.
-          items: { type: string }
-        limits: { $ref: "#/components/schemas/CatalogCardLimits" }
-        features: { $ref: "#/components/schemas/CatalogCardFeatures" }
+          items:
+            type: string
+        limits:
+          $ref: '#/components/schemas/CatalogCardLimits'
+        features:
+          $ref: '#/components/schemas/CatalogCardFeatures'
     CatalogCardLimits:
       type: object
       properties:
-        max_exec_timeout_seconds: { type: integer }
-        max_session_ttl_seconds: { type: integer }
-        workspace_quota_mb: { type: integer }
-        max_log_bytes: { type: integer, format: int64 }
-        max_concurrent_execs: { type: integer }
+        max_exec_timeout_seconds:
+          type: integer
+        max_session_ttl_seconds:
+          type: integer
+        workspace_quota_mb:
+          type: integer
+          description: Maximum quota accepted for a Session workspace; newly created
+            Session workspaces use this size, and pre-created workspaces may be smaller
+            but cannot exceed it.
+        max_log_bytes:
+          type: integer
+          format: int64
+        max_concurrent_execs:
+          type: integer
     CatalogCardFeatures:
       type: object
       properties:
-        viewer: { type: boolean }
-        suspend_resume: { type: boolean }
+        viewer:
+          type: boolean
+        suspend_resume:
+          type: boolean
     StartGUIRequest:
       type: object
       properties:
-        kind: { type: string, enum: [novnc] }
-        resolution: { type: string, example: "1280x800" }
-        ttl_seconds: { type: integer, minimum: 60, maximum: 3600, default: 900 }
+        kind:
+          type: string
+          enum:
+          - novnc
+        resolution:
+          type: string
+          example: 1280x800
+        ttl_seconds:
+          type: integer
+          minimum: 60
+          maximum: 3600
+          default: 900
         metadata:
           type: object
-          additionalProperties: { type: string }
+          additionalProperties:
+            type: string
     ViewerDescriptor:
       type: object
       properties:
-        sandbox_id: { type: string }
-        runtime_profile: { type: string }
-        status: { type: string, enum: [starting, ready, stopped] }
-        kind: { type: string, enum: [novnc] }
-        ready: { type: boolean }
-        page_url: { type: string }
-        websocket_url: { type: string }
-        proxy_url: { type: string }
-        access_token: { type: string }
-        token_header: { type: string, example: X-Genesis-Viewer-Token }
-        expires_at: { type: string, format: date-time }
-        renew_on_access: { type: boolean }
+        sandbox_id:
+          type: string
+        runtime_profile:
+          type: string
+        status:
+          type: string
+          enum:
+          - starting
+          - ready
+          - stopped
+        kind:
+          type: string
+          enum:
+          - novnc
+        ready:
+          type: boolean
+        page_url:
+          type: string
+        websocket_url:
+          type: string
+        proxy_url:
+          type: string
+        access_token:
+          type: string
+        token_header:
+          type: string
+          example: X-Genesis-Viewer-Token
+        expires_at:
+          type: string
+          format: date-time
+        renew_on_access:
+          type: boolean
     ViewerPolicy:
       type: object
       properties:
-        supported: { type: boolean }
-        default_kind: { type: string }
+        supported:
+          type: boolean
+        default_kind:
+          type: string
         allowed_kinds:
           type: array
-          items: { type: string }
-        port: { type: integer }
-        token_ttl_seconds: { type: integer }
-        renew_on_access: { type: boolean }
+          items:
+            type: string
+        port:
+          type: integer
+        token_ttl_seconds:
+          type: integer
+        renew_on_access:
+          type: boolean
         artifacts:
           type: array
-          items: { type: string }
+          items:
+            type: string
     PlatformSpec:
       type: object
       properties:
-        os: { type: string, example: linux }
-        architecture: { type: string, example: amd64 }
-        variant: { type: string, example: v8 }
+        os:
+          type: string
+          example: linux
+        architecture:
+          type: string
+          example: amd64
+        variant:
+          type: string
+          example: v8
     ResourceLimits:
       type: object
       properties:
-        memory_mb: { type: integer }
-        cpus: { type: number, format: double }
-        pids: { type: integer }
-        disk_mb: { type: integer }
+        memory_mb:
+          type: integer
+        cpus:
+          type: number
+          format: double
+        pids:
+          type: integer
+        disk_mb:
+          type: integer
+        temp_mb:
+          type: integer
+          description: Fixed profile temp partition; disk_mb includes main and temporary
+            mounts.
+        memory_reservation_mb:
+          type: integer
+          description: Server-managed soft limit (cgroup memory.soft_limit_in_bytes)
+            also used for quota accounting; equals memory_mb unless the profile overrides
+            it. Client-supplied values are rejected.
+        memory_swap_mb:
+          type: integer
+          description: Server-managed total memory+swap budget in MB; 0/absent disables
+            swap for the container. Client-supplied values are rejected.
     NetworkPolicy:
       type: object
       properties:
-        mode: { type: string, enum: [none, allowlist, internet, internal] }
+        mode:
+          type: string
+          enum:
+          - none
+          - allowlist
+          - internet
+          - internal
         allowed_hosts:
           type: array
-          items: { type: string }
+          items:
+            type: string
     FilesystemPolicy:
       type: object
       properties:
-        read_only_rootfs: { type: boolean }
+        read_only_rootfs:
+          type: boolean
         allowed_host_paths:
           type: array
-          items: { type: string }
+          items:
+            type: string
     SandboxSpec:
       type: object
       properties:
-        runtime_profile: { type: string }
-        image: { type: string }
-        runtime: { type: string }
-        platform: { $ref: "#/components/schemas/PlatformSpec" }
-        working_dir: { type: string }
-        resource_limits: { $ref: "#/components/schemas/ResourceLimits" }
-        network_policy: { $ref: "#/components/schemas/NetworkPolicy" }
-        filesystem_policy: { $ref: "#/components/schemas/FilesystemPolicy" }
+        runtime_profile:
+          type: string
+        image:
+          type: string
+        runtime:
+          type: string
+        platform:
+          $ref: '#/components/schemas/PlatformSpec'
+        working_dir:
+          type: string
+        resource_limits:
+          $ref: '#/components/schemas/ResourceLimits'
+        network_policy:
+          $ref: '#/components/schemas/NetworkPolicy'
+        filesystem_policy:
+          $ref: '#/components/schemas/FilesystemPolicy'
         env:
           type: object
-          additionalProperties: { type: string }
+          additionalProperties:
+            type: string
         labels:
           type: object
-          additionalProperties: { type: string }
+          additionalProperties:
+            type: string
     PolicyRequest:
       type: object
       properties:
-        runtime_profile: { type: string }
-        exec_timeout_seconds: { type: integer, minimum: 1 }
-        platform: { $ref: "#/components/schemas/PlatformSpec" }
-        resource_limits: { $ref: "#/components/schemas/ResourceLimits" }
-        network_policy: { $ref: "#/components/schemas/NetworkPolicy" }
-        filesystem_policy: { $ref: "#/components/schemas/FilesystemPolicy" }
+        runtime_profile:
+          type: string
+        exec_timeout_seconds:
+          type: integer
+          minimum: 1
+        platform:
+          $ref: '#/components/schemas/PlatformSpec'
+        resource_limits:
+          $ref: '#/components/schemas/ResourceLimits'
+        network_policy:
+          $ref: '#/components/schemas/NetworkPolicy'
+        filesystem_policy:
+          $ref: '#/components/schemas/FilesystemPolicy'
         env:
           type: object
-          additionalProperties: { type: string }
+          additionalProperties:
+            type: string
         labels:
           type: object
-          additionalProperties: { type: string }
+          additionalProperties:
+            type: string
         credential_bindings:
           type: array
-          items: { $ref: "#/components/schemas/CredentialBinding" }
-        allow_runtime_install: { type: boolean }
+          items:
+            $ref: '#/components/schemas/CredentialBinding'
+        allow_runtime_install:
+          type: boolean
     SecretRef:
       type: object
-      required: [name, key]
+      required:
+      - name
+      - key
       properties:
-        name: { type: string }
-        key: { type: string }
+        name:
+          type: string
+        key:
+          type: string
     CredentialBinding:
       type: object
-      required: [ref, env]
+      required:
+      - ref
+      - env
       properties:
-        ref: { $ref: "#/components/schemas/SecretRef" }
-        env: { type: string, example: GITHUB_TOKEN }
+        ref:
+          $ref: '#/components/schemas/SecretRef'
+        env:
+          type: string
+          example: GITHUB_TOKEN
     LeaseRequest:
       type: object
-      description: >-
-        Advanced API. The authenticated tenant and user are derived exclusively from the
-        Bearer API key and cannot be supplied by the request body. Environment selection
-        uses the same EnvironmentSelector as Public endpoints.
+      additionalProperties: false
+      description: The authenticated tenant and user are derived exclusively from
+        the Bearer API key. Environment selection uses the same EnvironmentSelector
+        as other public endpoints.
       properties:
-        workspace_id: { type: string }
-        environment: { $ref: "#/components/schemas/EnvironmentSelector" }
-        resolution_id: { type: string, description: "Environment resolution ticket from /v1/environment:resolve. Reuses an already resolved immutable environment result. Mutually exclusive with environment." }
-        risk_level: { type: string, enum: [low, medium, high] }
-        spec: { $ref: "#/components/schemas/SandboxSpec" }
-        policy_request: { $ref: "#/components/schemas/PolicyRequest" }
+        workspace_id:
+          type: string
+        environment:
+          $ref: '#/components/schemas/EnvironmentSelector'
+        resolution_id:
+          type: string
+          description: Environment resolution ticket from /v1/environment:resolve.
+            Reuses an already resolved immutable environment result. Mutually exclusive
+            with environment.
         metadata:
           type: object
-          additionalProperties: { type: string }
+          additionalProperties:
+            type: string
     RenewRequest:
       type: object
-      required: [extend_seconds]
+      required:
+      - extend_seconds
       properties:
-        extend_seconds: { type: integer, minimum: 1 }
+        extend_seconds:
+          type: integer
+          minimum: 1
     SubmitJobRequest:
       type: object
-      description: >-
-        Clean public job request. Exactly one of code/command is required. `environment` and
-        `resolution_id` are mutually exclusive. Internal fields (image, runtime, host paths)
-        and caller-supplied identity fields (tenant_id, user_id) are not accepted on the
-        Public surface. Tenant and user are derived exclusively from the Bearer API key.
+      additionalProperties: false
+      description: Clean public job request. Exactly one of code/command is required.
+        `environment` and `resolution_id` are mutually exclusive. Internal fields
+        (image, runtime, host paths) and caller-supplied identity fields (tenant_id,
+        user_id) are not accepted on the Public surface. Tenant and user are derived
+        exclusively from the Bearer API key.
       properties:
-        environment: { $ref: "#/components/schemas/EnvironmentSelector" }
-        resolution_id: { type: string, description: "Environment resolution ticket from /v1/environment:resolve. Reuses an already resolved immutable environment result. Mutually exclusive with environment." }
-        code: { type: string }
+        environment:
+          $ref: '#/components/schemas/EnvironmentSelector'
+        resolution_id:
+          type: string
+          description: Environment resolution ticket from /v1/environment:resolve.
+            Reuses an already resolved immutable environment result. Mutually exclusive
+            with environment.
+        code:
+          type: string
         command:
           type: array
-          items: { type: string }
-        language: { type: string, enum: [python, node, javascript, typescript], description: "Code execution language. Only used with `code`; shell or binary commands should use `command`." }
-        timeout_seconds: { type: integer, minimum: 1, description: "Bounded by the profile limit max_exec_timeout_seconds (discoverable via Catalog)." }
-        queue_wait_timeout_seconds: { type: integer, minimum: 0, maximum: 30, default: 10, description: "Admission queue wait; unrelated to ?wait which bounds waiting for the result." }
-        workspace_id: { type: string }
-        session_id: { type: string }
-        idempotency_key: { type: string }
-        callback_url: { type: string, description: "Optional completion webhook; subject to tenant allowlist, HMAC signing and bounded retries." }
+          items:
+            type: string
+        language:
+          type: string
+          enum:
+          - python
+          - node
+          - javascript
+          - typescript
+          description: Code execution language. Only used with `code`; shell or binary
+            commands should use `command`.
+        timeout_seconds:
+          type: integer
+          minimum: 1
+          description: Bounded by the profile limit max_exec_timeout_seconds (discoverable
+            via Catalog).
+        queue_wait_timeout_seconds:
+          type: integer
+          minimum: 0
+          maximum: 30
+          default: 10
+          description: Admission queue wait; unrelated to ?wait which bounds waiting
+            for the result.
+        workspace_id:
+          type: string
+        session_id:
+          type: string
+        idempotency_key:
+          type: string
+          maxLength: 128
+          description: Maximum 128 UTF-8 bytes.
+        callback_url:
+          type: string
+          description: Optional completion webhook; subject to tenant allowlist, HMAC
+            signing and bounded retries.
         input_artifact_ids:
           type: array
-          items: { type: string }
+          items:
+            type: string
         env:
           type: object
-          description: Merged over profile env baseline; server may redact or reject sensitive keys.
-          additionalProperties: { type: string }
+          description: Merged over profile env baseline; server may redact or reject
+            sensitive keys.
+          additionalProperties:
+            type: string
         metadata:
           type: object
-          description: 'Opaque metadata for audit. Convention: metadata["client.trace_ref"] carries the caller trace reference.'
-          additionalProperties: { type: string }
+          description: 'Opaque metadata for audit. Convention: metadata["client.trace_ref"]
+            carries the caller trace reference.'
+          additionalProperties:
+            type: string
     JobResult:
       type: object
       properties:
-        job_id: { type: string }
-        sandbox_id: { type: string }
-        tenant_id: { type: string }
-        workspace_id: { type: string }
-        task_type: { type: string }
-        operation: { type: string }
-        status: { type: string }
-        exit_code: { type: integer }
-        stdout: { type: string }
-        stderr: { type: string }
-        error_code: { type: string }
-        error: { type: string }
-        duration_ms: { type: integer, format: int64 }
-        stdout_truncated: { type: boolean }
-        stderr_truncated: { type: boolean }
-        started_at: { type: string, format: date-time }
-        finished_at: { type: string, format: date-time }
-        logs_url: { type: string, description: "SSE log stream URL; returned when ?wait expires while the job is still running." }
-        effective_environment: { $ref: "#/components/schemas/EffectiveEnvironment" }
+        job_id:
+          type: string
+        sandbox_id:
+          type: string
+        tenant_id:
+          type: string
+        workspace_id:
+          type: string
+        task_type:
+          type: string
+        operation:
+          type: string
+        status:
+          type: string
+          enum:
+          - queued
+          - running
+          - succeeded
+          - failed
+          - cancelled
+          - timed_out
+          - interrupted
+          description: interrupted means execution began but the service restarted
+            before a result could be confirmed; reconcile possible side effects before
+            retrying.
+        exit_code:
+          type: integer
+        stdout:
+          type: string
+        stderr:
+          type: string
+        error_code:
+          type: string
+          description: Machine-readable execution error. SERVICE_RESTART_INTERRUPTED
+            means execution began but its result was not confirmed; SERVICE_RESTART_CANCELLED_BEFORE_START
+            means the queued job never began. A persisted terminal QUOTA_EXCEEDED
+            means this job was admitted but could not obtain runtime capacity; submit
+            a new job with a new idempotency_key after capacity is available. Do not
+            replay with the same key or automatically repeat the operation.
+        error:
+          type: string
+        duration_ms:
+          type: integer
+          format: int64
+        stdout_truncated:
+          type: boolean
+        stderr_truncated:
+          type: boolean
+        started_at:
+          type: string
+          format: date-time
+        finished_at:
+          type: string
+          format: date-time
+        logs_url:
+          type: string
+          description: SSE log stream URL; returned when ?wait expires while the job
+            is still running.
+        idempotency_key:
+          type: string
+          maxLength: 128
+          description: Echo of the caller-provided idempotency key; maximum 128 UTF-8
+            bytes.
+        effective_policy:
+          type: object
+          description: Server-resolved execution policy. Secret values are redacted.
+        effective_environment:
+          $ref: '#/components/schemas/EffectiveEnvironment'
         output_artifacts:
           type: array
-          items: { $ref: "#/components/schemas/Artifact" }
+          items:
+            $ref: '#/components/schemas/Artifact'
     JobList:
       type: object
       properties:
         items:
           type: array
-          items: { $ref: "#/components/schemas/JobResult" }
-        next_offset: { type: integer }
-        total: { type: integer }
+          items:
+            $ref: '#/components/schemas/JobResult'
+        next_offset:
+          type: integer
+        total:
+          type: integer
     SandboxLease:
       type: object
       properties:
-        sandbox_id: { type: string }
-        lease_id: { type: string }
-        tenant_id: { type: string }
-        workspace_id: { type: string }
-        runtime_profile: { type: string }
-        profile_revision: { type: string, description: "Opaque immutable Profile revision pinned when the Session is created." }
-        effective_environment: { $ref: "#/components/schemas/EffectiveEnvironment" }
-        status: { type: string }
-        created_at: { type: string, format: date-time }
-        expires_at: { type: string, format: date-time }
-        effective_policy: { type: object }
+        sandbox_id:
+          type: string
+        lease_id:
+          type: string
+        tenant_id:
+          type: string
+        user_id:
+          type: string
+          description: Authenticated owner; cannot be supplied or changed by the caller.
+        workspace_id:
+          type: string
+        runtime_profile:
+          type: string
+        profile_revision:
+          type: string
+          description: Opaque immutable Profile revision pinned when the Session is
+            created.
+        effective_environment:
+          $ref: '#/components/schemas/EffectiveEnvironment'
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        effective_policy:
+          type: object
         metadata:
           type: object
-          additionalProperties: { type: string }
-        resource_version: { type: integer, format: int64 }
+          additionalProperties:
+            type: string
+        resource_version:
+          type: integer
+          format: int64
     RuntimeCapabilities:
       type: object
       properties:
-        available: { type: boolean }
-        runtime_kind: { type: string }
-        default_runtime: { type: string }
+        available:
+          type: boolean
+        runtime_kind:
+          type: string
+        default_runtime:
+          type: string
         available_runtimes:
           type: array
-          items: { type: string }
+          items:
+            type: string
         runtime_profiles:
           type: array
-          items: { $ref: "#/components/schemas/RuntimeProfile" }
+          items:
+            $ref: '#/components/schemas/RuntimeProfile'
         supported_task_types:
           type: array
-          items: { type: string }
+          items:
+            type: string
         supported_languages:
           type: array
-          items: { type: string }
+          items:
+            type: string
         supported_state_policies:
           type: array
-          items: { type: string }
-        queue: { $ref: "#/components/schemas/QueueCapabilities" }
+          items:
+            type: string
+        queue:
+          $ref: '#/components/schemas/QueueCapabilities'
         queue_snapshots:
           type: array
-          items: { $ref: "#/components/schemas/QueueSnapshot" }
-        execd: { $ref: "#/components/schemas/ExecdCapabilities" }
+          items:
+            $ref: '#/components/schemas/QueueSnapshot'
+        execd:
+          $ref: '#/components/schemas/ExecdCapabilities'
     RuntimeProfile:
       type: object
       properties:
-        name: { type: string }
-        image: { type: string }
-        runtime: { type: string }
-        platform: { $ref: "#/components/schemas/PlatformSpec" }
+        name:
+          type: string
+        image:
+          type: string
+        runtime:
+          type: string
+        platform:
+          $ref: '#/components/schemas/PlatformSpec'
         task_types:
           type: array
-          items: { type: string }
+          items:
+            type: string
         languages:
           type: array
-          items: { type: string }
+          items:
+            type: string
         operations:
           type: array
-          items: { type: string }
-        reusable: { type: boolean }
-        viewer: { $ref: "#/components/schemas/ViewerPolicy" }
+          items:
+            type: string
+        reusable:
+          type: boolean
+        viewer:
+          $ref: '#/components/schemas/ViewerPolicy'
     QueueSnapshot:
       type: object
       properties:
-        pool_key: { type: string }
-        active: { type: integer }
-        queued: { type: integer }
+        pool_key:
+          type: string
+        active:
+          type: integer
+        queued:
+          type: integer
     QueueCapabilities:
       type: object
       properties:
-        max_waiting: { type: integer }
-        default_wait_seconds: { type: integer }
-        max_wait_seconds: { type: integer }
+        max_waiting:
+          type: integer
+        default_wait_seconds:
+          type: integer
+        max_wait_seconds:
+          type: integer
     ExecdCapabilities:
       type: object
       properties:
-        command: { type: boolean }
-        session: { type: boolean }
-        files: { type: boolean }
-        metrics: { type: boolean }
+        command:
+          type: boolean
+        session:
+          type: boolean
+        files:
+          type: boolean
+        metrics:
+          type: boolean
     CreateWorkspaceRequest:
       type: object
       properties:
-        workspace_id: { type: string }
-        retention_mode: { type: string, enum: [ttl, explicit_delete], default: ttl }
-        ttl_seconds: { type: integer, minimum: 1 }
-        quota_mb: { type: integer, minimum: 0 }
+        workspace_binding:
+          $ref: '#/components/schemas/WorkspaceBindingRequest'
+        workspace_id:
+          type: string
+        retention_mode:
+          type: string
+          enum:
+          - ttl
+          - explicit_delete
+          default: ttl
+        ttl_seconds:
+          type: integer
+          minimum: 1
+        quota_mb:
+          type: integer
+          minimum: 0
         metadata:
           type: object
-          additionalProperties: { type: string }
+          additionalProperties:
+            type: string
+    WorkspaceLifecycleRequest:
+      type: object
+      additionalProperties: false
+      required:
+      - operation_id
+      - expected_revision
+      - state
+      properties:
+        operation_id:
+          type: string
+          minLength: 1
+          maxLength: 128
+          pattern: ^[A-Za-z0-9_.-]+$
+        expected_revision:
+          type: integer
+          format: int64
+          minimum: 0
+          maximum: 9007199254740990
+        state:
+          type: string
+          enum:
+          - active
+          - paused
+          - terminal
+        hold_seconds:
+          type: integer
+          minimum: 0
+          maximum: 86400
+          default: 0
+          description: Active or paused only. Zero selects a one-hour hold.
+        terminal_at:
+          type: string
+          format: date-time
+          description: Authoritative parent terminal time. Required for terminal only.
+        retention_seconds:
+          type: integer
+          minimum: 0
+          maximum: 2592000
+          description: Positive and required for terminal only.
+    WorkspaceLifecycleReceipt:
+      type: object
+      additionalProperties: false
+      required:
+      - operation_id
+      - workspace_id
+      - revision
+      - state
+      - deadline
+      - request_digest
+      properties:
+        operation_id:
+          type: string
+        workspace_id:
+          type: string
+        revision:
+          type: integer
+          format: int64
+          minimum: 1
+          maximum: 9007199254740991
+        state:
+          type: string
+          enum:
+          - active
+          - paused
+          - terminal
+        deadline:
+          type: string
+          format: date-time
+          description: UTC deadline with at most microsecond precision.
+        terminal_at:
+          type: string
+          format: date-time
+        request_digest:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+    WorkspaceLifecycleLookup:
+      type: object
+      additionalProperties: false
+      required:
+      - state
+      - receipt
+      properties:
+        state:
+          type: string
+          enum:
+          - found
+          - unknown
+          - history_expired
+        receipt:
+          nullable: true
+          allOf:
+          - $ref: '#/components/schemas/WorkspaceLifecycleReceipt'
     Workspace:
       type: object
       properties:
-        workspace_id: { type: string }
-        tenant_id: { type: string }
-        user_id: { type: string }
-        retention_mode: { type: string, enum: [ttl, explicit_delete] }
-        expires_at: { type: string, format: date-time, nullable: true }
-        quota_mb: { type: integer, minimum: 0 }
-        created_at: { type: string, format: date-time }
+        lifecycle_revision:
+          type: integer
+          format: int64
+          minimum: 0
+          maximum: 9007199254740991
+          description: Current storage lifecycle control revision; zero before first
+            control.
+        workspace_id:
+          type: string
+        tenant_id:
+          type: string
+        user_id:
+          type: string
+        retention_mode:
+          type: string
+          enum:
+          - ttl
+          - explicit_delete
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        quota_mb:
+          type: integer
+          minimum: 0
+        created_at:
+          type: string
+          format: date-time
         metadata:
           type: object
-          additionalProperties: { type: string }
+          additionalProperties:
+            type: string
     Artifact:
       type: object
       properties:
-        artifact_id: { type: string }
-        tenant_id: { type: string }
-        workspace_id: { type: string }
-        job_id: { type: string }
-        name: { type: string }
-        size: { type: integer, format: int64 }
-        sha256: { type: string }
-        mime: { type: string }
-        created_at: { type: string, format: date-time }
+        artifact_id:
+          type: string
+        tenant_id:
+          type: string
+        workspace_id:
+          type: string
+        job_id:
+          type: string
+        name:
+          type: string
+        size:
+          type: integer
+          format: int64
+        sha256:
+          type: string
+        mime:
+          type: string
+        created_at:
+          type: string
+          format: date-time
     CreateSessionRequest:
       type: object
+      additionalProperties: false
       properties:
-        workspace_id: { type: string }
-        environment: { $ref: "#/components/schemas/EnvironmentSelector" }
-        resolution_id: { type: string, description: "Environment resolution ticket from /v1/environment:resolve. Reuses an already resolved immutable environment result. Mutually exclusive with environment." }
-        idempotency_key: { type: string, maxLength: 128 }
-        state_policy: { type: string, enum: [session] }
-        ttl_seconds: { type: integer, minimum: 1 }
-        workspace_retention: { type: string, enum: [ttl, explicit_delete] }
-        workspace_ttl_seconds: { type: integer, minimum: 1 }
+        workspace_id:
+          type: string
+        environment:
+          $ref: '#/components/schemas/EnvironmentSelector'
+        resolution_id:
+          type: string
+          description: Environment resolution ticket from /v1/environment:resolve.
+            Reuses an already resolved immutable environment result. Mutually exclusive
+            with environment.
+        idempotency_key:
+          type: string
+          maxLength: 128
+          description: Maximum 128 UTF-8 bytes.
+        state_policy:
+          type: string
+          enum:
+          - session
+        ttl_seconds:
+          type: integer
+          minimum: 1
+        workspace_retention:
+          type: string
+          enum:
+          - ttl
+          - explicit_delete
+        workspace_ttl_seconds:
+          type: integer
+          minimum: 1
         metadata:
           type: object
-          additionalProperties: { type: string }
+          additionalProperties:
+            type: string
     Session:
       type: object
       properties:
-        session_id: { type: string }
-        tenant_id: { type: string }
-        user_id: { type: string }
-        workspace_id: { type: string }
-        runtime_profile: { type: string }
-        profile_revision: { type: string }
-        effective_environment: { $ref: "#/components/schemas/EffectiveEnvironment" }
-        state_policy: { type: string }
-        active_sandbox_id: { type: string }
-        status: { type: string }
-        created_at: { type: string, format: date-time }
-        expires_at: { type: string, format: date-time }
+        session_id:
+          type: string
+        tenant_id:
+          type: string
+        user_id:
+          type: string
+        workspace_id:
+          type: string
+        runtime_profile:
+          type: string
+        profile_revision:
+          type: string
+        effective_environment:
+          $ref: '#/components/schemas/EffectiveEnvironment'
+        state_policy:
+          type: string
+        active_sandbox_id:
+          type: string
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
         metadata:
           type: object
-          additionalProperties: { type: string }
-        resource_version: { type: integer, format: int64, minimum: 1 }
+          additionalProperties:
+            type: string
+        idempotency_key:
+          type: string
+          maxLength: 128
+          description: Echo of the caller-provided creation idempotency key; maximum
+            128 UTF-8 bytes.
+        resource_version:
+          type: integer
+          format: int64
+          minimum: 1
     ExecSessionRequest:
       type: object
       description: Synchronous exec request. Exactly one of code/command is required.
       properties:
+        output_directory:
+          type: string
+          pattern: ^output/[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$
+          description: Optional fresh invocation output directory; fixed management-owned
+            ACL, never an arbitrary host path.
+        operation_id:
+          type: string
+          maxLength: 128
+          description: Caller operation identity, deduplicated per principal and session.
+            Reuse after an ambiguous transport failure.
+        subprocess_policy:
+          type: string
+          enum:
+          - allow
+          - deny
+          description: deny requires explicit command and kernel seccomp enforcement;
+            threads remain allowed.
         command:
           type: array
-          items: { type: string }
-        code: { type: string }
-        language: { type: string, enum: [python, node, javascript, typescript] }
-        working_dir: { type: string, description: "Per-exec working directory override. Defaults to session default_cwd." }
+          items:
+            type: string
+        code:
+          type: string
+        language:
+          type: string
+          enum:
+          - python
+          - node
+          - javascript
+          - shell
+          - bash
+        working_dir:
+          type: string
+          description: Per-exec working directory override. Defaults to session default_cwd.
         env:
           type: object
-          description: Per-exec env overrides merged over session default_env.
-          additionalProperties: { type: string }
-        timeout_seconds: { type: integer, minimum: 1, description: "Exec timeout. Bounded by profile limit." }
+          description: Environment variables are applied only to this execution and
+            are never persisted or returned.
+          additionalProperties:
+            type: string
+        timeout_seconds:
+          type: integer
+          minimum: 1
+          description: Exec timeout. Bounded by profile limit.
     AsyncExecRequest:
       type: object
       description: Asynchronous exec request. Exactly one of code/command is required.
       properties:
+        trusted_governance:
+          $ref: '#/components/schemas/TrustedExecutionGovernance'
+        output_directory:
+          type: string
+          pattern: ^output/[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$
+          description: Optional fresh invocation output directory; bound to original
+            execution request.
+        operation_id:
+          type: string
+          maxLength: 128
+          description: Caller operation identity, deduplicated per principal and session.
+            Reuse after an ambiguous transport failure.
+        subprocess_policy:
+          type: string
+          enum:
+          - allow
+          - deny
+          description: deny requires explicit command and kernel seccomp enforcement;
+            threads remain allowed.
         command:
           type: array
-          items: { type: string }
-        code: { type: string }
-        language: { type: string, enum: [python, node, javascript, typescript] }
-        working_dir: { type: string, description: "Per-exec working directory override. Defaults to session default_cwd." }
+          items:
+            type: string
+        code:
+          type: string
+        language:
+          type: string
+          enum:
+          - python
+          - node
+          - javascript
+          - shell
+          - bash
+        working_dir:
+          type: string
+          description: Per-exec working directory override. Defaults to session default_cwd.
         env:
           type: object
-          description: Per-exec env overrides merged over session default_env.
-          additionalProperties: { type: string }
-        timeout_seconds: { type: integer, minimum: 1, description: "Exec timeout (starts counting from running, not queued). Bounded by profile limit." }
-        callback_url: { type: string, format: uri, description: "Optional completion webhook. Subject to tenant allowlist, HMAC signing, and bounded retries (see §9.3)." }
+          description: Environment variables are applied only to this execution and
+            are never persisted or returned.
+          additionalProperties:
+            type: string
+        timeout_seconds:
+          type: integer
+          minimum: 1
+          description: Exec timeout (starts counting from running, not queued). Bounded
+            by profile limit.
+        callback_url:
+          type: string
+          format: uri
+          description: Optional completion webhook. Subject to tenant allowlist, HMAC
+            signing, and bounded retries (see §9.3).
     ExecRecord:
       type: object
-      description: >-
-        Unified exec record. Shape aligns with JobResult for client parsing consistency (§7.5).
-        For sync exec, stdout/stderr are inline. For async exec, use the logs SSE endpoint.
+      description: Unified exec record. Shape aligns with JobResult for client parsing
+        consistency (§7.5). For sync exec, stdout/stderr are inline. For async exec,
+        use the logs SSE endpoint.
+      required:
+      - operation_id
+      - exec_id
+      - session_id
+      - status
+      - created_at
       properties:
-        exec_id: { type: string }
-        session_id: { type: string }
-        status: { type: string, enum: [queued, running, succeeded, failed, cancelled] }
-        exit_code: { type: integer }
-        error_code: { type: string, description: "Machine-readable error code (EXEC_CANCELLED, EXEC_TIMEOUT, SERVICE_RESTART, STREAM_INTERRUPTED)." }
-        stdout: { type: string, description: "Populated only for sync exec." }
-        stderr: { type: string, description: "Populated only for sync exec." }
-        stdout_truncated: { type: boolean }
-        stderr_truncated: { type: boolean }
-        working_dir: { type: string }
-        effective_environment: { $ref: "#/components/schemas/EffectiveEnvironment" }
-        logs_url: { type: string, description: "SSE log stream URL for async exec." }
-        duration_ms: { type: integer, format: int64 }
-        created_at: { type: string, format: date-time }
-        started_at: { type: string, format: date-time }
-        finished_at: { type: string, format: date-time }
+        operation_id:
+          type: string
+          description: Stable caller identity for lookup after a lost submission response.
+        exec_id:
+          type: string
+        session_id:
+          type: string
+        tenant_id:
+          type: string
+        user_id:
+          type: string
+        status:
+          type: string
+          enum:
+          - queued
+          - running
+          - succeeded
+          - failed
+          - cancelled
+          - timed_out
+          - interrupted
+          description: timed_out means the execution exceeded its execution deadline;
+            interrupted means execution began but the service restarted before a result
+            could be confirmed. Reconcile possible side effects before retrying either
+            state.
+        exit_code:
+          type: integer
+        error_code:
+          type: string
+          description: Machine-readable error code. SERVICE_RESTART_INTERRUPTED means
+            the exec began but its result was not confirmed; SERVICE_RESTART_CANCELLED_BEFORE_START
+            means a queued exec never began.
+        stop_confirmed:
+          type: boolean
+          description: Physical stop was confirmed. Terminal status alone never establishes
+            stopped state.
+        stdout:
+          type: string
+          description: Populated only for sync exec.
+        stderr:
+          type: string
+          description: Populated only for sync exec.
+        stdout_truncated:
+          type: boolean
+        stderr_truncated:
+          type: boolean
+        working_dir:
+          type: string
+        effective_environment:
+          $ref: '#/components/schemas/EffectiveEnvironment'
+        logs_url:
+          type: string
+          description: SSE log stream URL for async exec.
+        duration_ms:
+          type: integer
+          format: int64
+        created_at:
+          type: string
+          format: date-time
+        started_at:
+          type: string
+          format: date-time
+        finished_at:
+          type: string
+          format: date-time
     ExecRecordList:
       type: object
       properties:
         items:
           type: array
-          items: { $ref: "#/components/schemas/ExecRecord" }
-        next_cursor: { type: string }
-        total: { type: integer }
+          items:
+            $ref: '#/components/schemas/ExecRecord'
+        next_cursor:
+          type: string
+        total:
+          type: integer
     SessionContext:
       type: object
-      description: "Session execution context. cwd must be under /workspace."
+      description: Persistent Session context contains only cwd, which must be under
+        /workspace.
       properties:
-        cwd: { type: string, example: /workspace }
-        env:
-          type: object
-          additionalProperties: { type: string }
+        cwd:
+          type: string
+          example: /workspace
     ExecSessionResult:
       type: object
-      description: "Synchronous Session execution result. Output fields are bounded by profile max_log_bytes."
+      description: Synchronous Session execution result. Output fields are bounded
+        by profile max_log_bytes.
+      required:
+      - status
+      - exit_code
+      - stdout
+      - stderr
       properties:
-        exit_code: { type: integer }
-        stdout: { type: string }
-        stderr: { type: string }
-        stdout_truncated: { type: boolean }
-        stderr_truncated: { type: boolean }
-        environment: { type: string, enum: [sandbox] }
-        session_id: { type: string }
-        workspace_id: { type: string }
-        sandbox_id: { type: string }
-        cwd: { type: string, example: /workspace }
+        exec_id:
+          type: string
+          description: Present for Session execution; empty for a direct sandbox execution
+            without an ExecRecord.
+        status:
+          type: string
+          enum:
+          - queued
+          - running
+          - succeeded
+          - failed
+          - cancelled
+          - timed_out
+          - interrupted
+          description: Execution status vocabulary shared with JobResult and ExecRecord;
+            synchronous execution returns a terminal value.
+        error_code:
+          type: string
+          description: Machine-readable terminal error code, such as TIMEOUT or EXEC_CANCELLED.
+        effective_environment:
+          $ref: '#/components/schemas/EffectiveEnvironment'
+        exit_code:
+          type: integer
+        stdout:
+          type: string
+        stderr:
+          type: string
+        stdout_truncated:
+          type: boolean
+        stderr_truncated:
+          type: boolean
+        environment:
+          type: string
+          enum:
+          - sandbox
+        session_id:
+          type: string
+        workspace_id:
+          type: string
+        sandbox_id:
+          type: string
+        cwd:
+          type: string
+          example: /workspace
     WorkspaceFileInfo:
       type: object
+      required:
+      - path
+      - kind
+      - executable
       properties:
-        path: { type: string }
-        sandbox_path: { type: string }
-        environment: { type: string, enum: [workspace] }
-        name: { type: string }
-        kind: { type: string, enum: [file, dir] }
-        size: { type: integer, format: int64 }
-        sha256: { type: string }
-        mime: { type: string }
-        mod_time: { type: string, format: date-time }
+        executable:
+          type: boolean
+        path:
+          type: string
+        sandbox_path:
+          type: string
+        environment:
+          type: string
+          enum:
+          - workspace
+        name:
+          type: string
+        kind:
+          type: string
+          enum:
+          - file
+          - dir
+        size:
+          type: integer
+          format: int64
+        sha256:
+          type: string
+        mime:
+          type: string
+        mod_time:
+          type: string
+          format: date-time
     WorkspaceListResult:
       type: object
       properties:
-        path: { type: string }
+        path:
+          type: string
         entries:
           type: array
-          items: { $ref: "#/components/schemas/WorkspaceFileInfo" }
-        truncated: { type: boolean }
-        limit: { type: integer }
+          items:
+            $ref: '#/components/schemas/WorkspaceFileInfo'
+        truncated:
+          type: boolean
+        limit:
+          type: integer
+        offset:
+          type: integer
     BuildDependencyRequest:
       type: object
       description: Build dependencies for an already resolved immutable environment.
       oneOf:
-        - required: [resolution_id]
-        - required: [environment]
+      - required:
+        - resolution_id
+      - required:
+        - environment
       properties:
-        resolution_id: { type: string, description: "Environment resolution ticket from /v1/environment:resolve." }
+        resolution_id:
+          type: string
+          description: Environment resolution ticket from /v1/environment:resolve.
         environment:
-          $ref: "#/components/schemas/ExactEnvironmentSelector"
-        language: { type: string, enum: [python, node, javascript, typescript], description: "Dependency graph language being built, not a profile name." }
-        manifest: { type: string }
-        lockfile: { type: string }
+          $ref: '#/components/schemas/ExactEnvironmentSelector'
+        language:
+          type: string
+          enum:
+          - python
+          - node
+          - javascript
+          - typescript
+          description: Dependency graph language being built, not a profile name.
+        manifest:
+          type: string
+        lockfile:
+          type: string
         packages:
           type: array
-          items: { type: string }
+          items:
+            type: string
     DependencyBuild:
       type: object
-      required: [fingerprint, profile_name, profile_revision, language, status, read_only, created_at, updated_at]
+      required:
+      - fingerprint
+      - profile_name
+      - profile_revision
+      - language
+      - status
+      - read_only
+      - created_at
+      - updated_at
       properties:
-        fingerprint: { type: string }
-        tenant_id: { type: string }
-        workspace_id: { type: string }
-        profile_name: { type: string }
-        profile_revision: { type: string }
-        language: { type: string }
-        status: { type: string, enum: [ready, failed, building] }
-        cache_path: { type: string }
-        read_only: { type: boolean }
-        error: { type: string }
-        created_at: { type: string, format: date-time }
-        updated_at: { type: string, format: date-time }
+        fingerprint:
+          type: string
+        tenant_id:
+          type: string
+        workspace_id:
+          type: string
+        profile_name:
+          type: string
+        profile_revision:
+          type: string
+        language:
+          type: string
+        status:
+          type: string
+          enum:
+          - ready
+          - failed
+          - building
+        cache_path:
+          type: string
+        read_only:
+          type: boolean
+        error:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
     ExactEnvironmentSelector:
       type: object
       additionalProperties: false
-      required: [profile]
+      required:
+      - profile
       properties:
         profile:
           type: object
           additionalProperties: false
-          required: [name, revision]
+          required:
+          - name
+          - revision
           properties:
-            name: { type: string, minLength: 1 }
-            revision: { type: string, minLength: 1 }
+            name:
+              type: string
+              minLength: 1
+            revision:
+              type: string
+              minLength: 1
     AuditEvent:
       type: object
       properties:
-        event_id: { type: string }
-        tenant_id: { type: string }
-        user_id: { type: string }
-        principal_id: { type: string }
-        key_id: { type: string }
-        action: { type: string }
-        resource_type: { type: string }
-        resource_id: { type: string }
-        status: { type: string }
-        message: { type: string }
-        trace_id: { type: string }
-        created_at: { type: string, format: date-time }
+        event_id:
+          type: string
+        tenant_id:
+          type: string
+        user_id:
+          type: string
+        principal_id:
+          type: string
+        key_id:
+          type: string
+        action:
+          type: string
+        resource_type:
+          type: string
+        resource_id:
+          type: string
+        status:
+          type: string
+        message:
+          type: string
+        trace_id:
+          type: string
+        created_at:
+          type: string
+          format: date-time
     AuditEventList:
       type: object
       properties:
         items:
           type: array
-          items: { $ref: "#/components/schemas/AuditEvent" }
-        next_offset: { type: integer }
-        total: { type: integer }
+          items:
+            $ref: '#/components/schemas/AuditEvent'
+        next_offset:
+          type: integer
+        total:
+          type: integer
     ErrorResponse:
       type: object
-      description: >-
-        Unified error body (RFC 9457 spirit). request_id correlates with server TraceID and is
-        always present. 429 responses also carry a Retry-After header.
-      required: [error_code, message, request_id, details]
+      description: Unified error body (RFC 9457 spirit). request_id correlates with
+        server TraceID and is always present. 429 responses also carry a Retry-After
+        header.
+      required:
+      - error_code
+      - message
+      - request_id
+      - details
       properties:
         error_code:
           type: string
           enum:
-            - UNAUTHENTICATED
-            - PERMISSION_DENIED
-            - INVALID_ARGUMENT
-            - INVALID_SELECTOR
-            - PRECONDITION_REQUIRED
-            - PROFILE_NOT_FOUND
-            - PROFILE_NOT_ENABLED
-            - PROFILE_NOT_AVAILABLE
-            - NO_MATCHING_PROFILE
-            - RESOLUTION_EXPIRED
-            - RESOLUTION_INVALID
-            - SANDBOX_NOT_FOUND
-            - SANDBOX_BUSY
-            - SESSION_NOT_FOUND
-            - SESSION_EXPIRED
-            - SESSION_SUSPENDED
-            - SESSION_HAS_ACTIVE_EXECS
-            - IDEMPOTENCY_KEY_CONFLICT
-            - EXEC_TIMEOUT
-            - EXEC_CANCELLED
-            - QUEUE_FULL
-            - QUOTA_EXCEEDED
-            - WORKSPACE_QUOTA_EXCEEDED
-            - POLICY_DENIED
-            - NETWORK_DENIED
-            - RUNTIME_UNAVAILABLE
-            - CONFLICT
-            - INTERNAL_ERROR
-        message: { type: string }
-        request_id: { type: string }
+          - UNAUTHENTICATED
+          - PERMISSION_DENIED
+          - INVALID_ARGUMENT
+          - INVALID_SELECTOR
+          - PRECONDITION_REQUIRED
+          - PROFILE_NOT_FOUND
+          - PROFILE_NOT_ENABLED
+          - PROFILE_NOT_AVAILABLE
+          - NO_MATCHING_PROFILE
+          - RESOLUTION_EXPIRED
+          - RESOLUTION_INVALID
+          - SANDBOX_NOT_FOUND
+          - SANDBOX_BUSY
+          - SESSION_NOT_FOUND
+          - SESSION_EXPIRED
+          - SESSION_SUSPENDED
+          - SESSION_HAS_ACTIVE_EXECS
+          - IDEMPOTENCY_KEY_CONFLICT
+          - EXEC_TIMEOUT
+          - EXEC_CANCELLED
+          - QUEUE_FULL
+          - QUOTA_EXCEEDED
+          - WORKSPACE_QUOTA_EXCEEDED
+          - POLICY_DENIED
+          - NETWORK_DENIED
+          - RUNTIME_UNAVAILABLE
+          - CONFLICT
+          - INTERNAL_ERROR
+        message:
+          type: string
+        request_id:
+          type: string
         details:
           type: object
-          required: [retryable]
-          description: Machine-readable context. Always includes retryable and may include field, resource_type, retry_after_seconds, or unmet capabilities.
+          required:
+          - retryable
+          description: Machine-readable context. NO_MATCHING_PROFILE includes a reason,
+            unknown and unmet capabilities, and the count of unavailable matching
+            candidates without exposing profile names.
           properties:
-            retryable: { type: boolean }
-            field: { type: string }
-            resource_type: { type: string }
-            retry_after_seconds: { type: integer, minimum: 0 }
+            retryable:
+              type: boolean
+            field:
+              type: string
+            resource_type:
+              type: string
+            retry_after_seconds:
+              type: integer
+              minimum: 0
+            reason:
+              type: string
+              enum:
+              - no_matching_profile
+              - unknown_capabilities
+              - matching_profiles_unavailable
+            unknown_capabilities:
+              type: array
+              items:
+                type: string
+            unmet_capabilities:
+              type: array
+              items:
+                type: string
+            unavailable_candidate_count:
+              type: integer
+              minimum: 0
           additionalProperties: true
+    SharedStorageResource:
+      type: object
+      additionalProperties: false
+      required:
+      - storage_ref
+      - resource_id
+      - workspace_id
+      - source_identity
+      - provisioner_id
+      - binding_version
+      - budget_bytes
+      - quota_mb
+      - persistent
+      - hard_quota
+      - owner_tenant_id
+      - owner_user_id
+      - owner_run_id
+      - hard_quota_verified
+      - shared_attachment
+      properties:
+        storage_ref:
+          type: string
+        resource_id:
+          type: string
+        workspace_id:
+          type: string
+        source_identity:
+          type: string
+          pattern: ^[0-9a-f]{64}$
+        provisioner_id:
+          type: string
+        binding_version:
+          type: integer
+          minimum: 1
+        budget_bytes:
+          type: integer
+          minimum: 1
+        quota_mb:
+          type: integer
+          minimum: 32
+        persistent:
+          type: boolean
+        hard_quota:
+          type: boolean
+        owner_tenant_id:
+          type: string
+        owner_user_id:
+          type: string
+        owner_run_id:
+          type: string
+        hard_quota_verified:
+          type: boolean
+        shared_attachment:
+          type: boolean
+        identity:
+          type: object
+          additionalProperties: false
+          required:
+          - source_identity
+          - device_id
+          - root_inode
+          - backing_device_id
+          - backing_inode
+          - filesystem
+          - filesystem_uuid
+          - capacity_bytes
+          - inode_capacity
+          properties:
+            source_identity:
+              type: string
+              pattern: ^[0-9a-f]{64}$
+            device_id:
+              type: integer
+              minimum: 0
+            root_inode:
+              type: integer
+              minimum: 1
+            backing_device_id:
+              type: integer
+              minimum: 0
+            backing_inode:
+              type: integer
+              minimum: 1
+            filesystem:
+              type: string
+              enum:
+              - ext4
+            filesystem_uuid:
+              type: string
+              format: uuid
+            capacity_bytes:
+              type: integer
+              minimum: 1
+            inode_capacity:
+              type: integer
+              minimum: 1
+              maximum: 65536
+    MaintenanceProofQuery:
+      type: object
+      additionalProperties: false
+      required:
+      - context
+      - operation_id
+      - workspace_id
+      - source_identity
+      - claim_digest
+      properties:
+        context:
+          $ref: '#/components/schemas/PlatformCallContext'
+        operation_id:
+          type: string
+          minLength: 1
+          maxLength: 256
+          pattern: ^[^\u0000-\u001f\u007f\u2028\u2029]+$
+        workspace_id:
+          type: string
+          minLength: 1
+          maxLength: 256
+          pattern: ^[^\u0000-\u001f\u007f\u2028\u2029]+$
+        source_identity:
+          type: string
+          pattern: ^[0-9a-f]{64}$
+        claim_digest:
+          type: string
+          pattern: ^[0-9a-f]{64}$
+          description: 对不含claim_digest的完整请求作UTF-8规范JSON SHA256，绑定原来源与完整当前上下文。
+    PlatformCallContext:
+      type: object
+      description: 完整原上下文；所有身份字段为至多256个UTF-8字节的非空字符串，拒绝ASCII控制字符与Unicode行分隔符U+2028/U+2029。
+      additionalProperties: false
+      required:
+      - tenant_id
+      - user_id
+      - run_id
+      - trace_id
+      - authorization_scope
+      - decision_reference
+      - subject_kind
+      - invocation_id
+      - execution_id
+      - attempt_id
+      properties:
+        tenant_id:
+          type: string
+          minLength: 1
+          maxLength: 256
+          pattern: ^[^\u0000-\u001f\u007f\u2028\u2029]+$
+        user_id:
+          type: string
+          minLength: 1
+          maxLength: 256
+          pattern: ^[^\u0000-\u001f\u007f\u2028\u2029]+$
+        run_id:
+          type: string
+          minLength: 1
+          maxLength: 256
+          pattern: ^[^\u0000-\u001f\u007f\u2028\u2029]+$
+        trace_id:
+          type: string
+          minLength: 1
+          maxLength: 256
+          pattern: ^[^\u0000-\u001f\u007f\u2028\u2029]+$
+        authorization_scope:
+          type: string
+          minLength: 1
+          maxLength: 256
+          pattern: ^[^\u0000-\u001f\u007f\u2028\u2029]+$
+        decision_reference:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 256
+          pattern: ^[^\u0000-\u001f\u007f\u2028\u2029]+$
+        subject_kind:
+          type: string
+          enum:
+          - enterprise
+        invocation_id:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 256
+          pattern: ^[^\u0000-\u001f\u007f\u2028\u2029]+$
+        execution_id:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 256
+          pattern: ^[^\u0000-\u001f\u007f\u2028\u2029]+$
+        attempt_id:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 256
+          pattern: ^[^\u0000-\u001f\u007f\u2028\u2029]+$
+    MaintenanceSourceProof:
+      type: object
+      additionalProperties: false
+      description: 原源管理身份下真实FD枚举；未知原调用屏障或未停止调用明确拒绝。仅文件API历史允许空calls，但foreign叶必须关联唯一原UID登记。
+      required:
+      - context
+      - operation_id
+      - claim_digest
+      - source_identity
+      - root_device
+      - root_inode
+      - calls
+      - leaves
+      properties:
+        context:
+          $ref: '#/components/schemas/PlatformCallContext'
+        operation_id:
+          type: string
+          minLength: 1
+          maxLength: 256
+          pattern: ^[^\u0000-\u001f\u007f\u2028\u2029]+$
+        claim_digest:
+          type: string
+          pattern: ^[0-9a-f]{64}$
+        source_identity:
+          type: string
+          pattern: ^[0-9a-f]{64}$
+        root_device:
+          type: integer
+          format: int64
+          minimum: 0
+        root_inode:
+          type: integer
+          format: int64
+          minimum: 1
+        calls:
+          type: array
+          maxItems: 10000
+          items:
+            $ref: '#/components/schemas/MaintenanceCall'
+        leaves:
+          type: array
+          maxItems: 100000
+          items:
+            $ref: '#/components/schemas/MaintenanceLeaf'
+    MaintenanceCall:
+      type: object
+      additionalProperties: false
+      required:
+      - call_id
+      - context
+      - lease_ref
+      - operation_id
+      - request_digest
+      - execution_id
+      - output_directory
+      - uid
+      - gid
+      - root_device
+      - root_inode
+      - authorized_work_write
+      - stop_confirmed
+      properties:
+        call_id:
+          type: string
+          minLength: 1
+          maxLength: 256
+          pattern: ^[^\u0000-\u001f\u007f\u2028\u2029]+$
+        context:
+          $ref: '#/components/schemas/PlatformCallContext'
+        lease_ref:
+          $ref: '#/components/schemas/PlatformLeaseRef'
+        operation_id:
+          type: string
+          minLength: 1
+          maxLength: 256
+          pattern: ^[^\u0000-\u001f\u007f\u2028\u2029]+$
+        request_digest:
+          type: string
+          pattern: ^[0-9a-f]{64}$
+        execution_id:
+          type: string
+          minLength: 1
+          maxLength: 256
+          pattern: ^[^\u0000-\u001f\u007f\u2028\u2029]+$
+        output_directory:
+          type: string
+          pattern: ^output/[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$
+        uid:
+          type: integer
+          format: int64
+          minimum: 1
+        gid:
+          type: integer
+          format: int64
+          minimum: 1
+          description: 原输出根私有GID，不是负载主GID65532。
+        root_device:
+          type: integer
+          format: int64
+          minimum: 0
+        root_inode:
+          type: integer
+          format: int64
+          minimum: 1
+        authorized_work_write:
+          type: boolean
+        stop_confirmed:
+          type: boolean
+          enum:
+          - true
+    PlatformLeaseRef:
+      type: object
+      additionalProperties: false
+      required:
+      - provider_id
+      - lease_id
+      - workspace
+      - generation
+      - expires_at
+      properties:
+        provider_id:
+          type: string
+          minLength: 1
+          maxLength: 256
+          pattern: ^[^\u0000-\u001f\u007f\u2028\u2029]+$
+        lease_id:
+          type: string
+          minLength: 1
+          maxLength: 256
+          pattern: ^[^\u0000-\u001f\u007f\u2028\u2029]+$
+        workspace:
+          $ref: '#/components/schemas/PlatformWorkspaceRef'
+        generation:
+          type: integer
+          format: int64
+          minimum: 1
+        expires_at:
+          type: string
+          format: date-time
+    PlatformWorkspaceRef:
+      type: object
+      additionalProperties: false
+      required:
+      - workspace_key
+      - provider_id
+      - resource_id
+      - scope
+      - generation
+      properties:
+        workspace_key:
+          type: string
+          minLength: 1
+          maxLength: 256
+          pattern: ^[^\u0000-\u001f\u007f\u2028\u2029]+$
+        provider_id:
+          type: string
+          minLength: 1
+          maxLength: 256
+          pattern: ^[^\u0000-\u001f\u007f\u2028\u2029]+$
+        resource_id:
+          type: string
+          minLength: 1
+          maxLength: 256
+          pattern: ^[^\u0000-\u001f\u007f\u2028\u2029]+$
+        scope:
+          type: string
+          minLength: 1
+          maxLength: 256
+          pattern: ^[^\u0000-\u001f\u007f\u2028\u2029]+$
+        generation:
+          type: integer
+          format: int64
+          minimum: 1
+    MaintenanceLeaf:
+      type: object
+      additionalProperties: false
+      required:
+      - path
+      - device
+      - inode
+      - uid
+      - gid
+      - mode
+      - directory
+      - call_id
+      properties:
+        path:
+          type: string
+          description: work/output完整相对路径，含两个公共根，不含宿主路径。
+        device:
+          type: integer
+          format: int64
+          minimum: 0
+        inode:
+          type: integer
+          format: int64
+          minimum: 1
+        uid:
+          type: integer
+          format: int64
+          minimum: 0
+        gid:
+          type: integer
+          format: int64
+          minimum: 0
+        mode:
+          type: integer
+          minimum: 0
+          maximum: 4095
+          description: POSIX权限值含sticky/setgid，排除文件类型位。
+        directory:
+          type: boolean
+        call_id:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 256
+          pattern: ^[^\u0000-\u001f\u007f\u2028\u2029]+$
+    WorkspaceBindingRequest:
+      oneOf:
+      - type: object
+        additionalProperties: false
+        required:
+        - mode
+        properties:
+          mode:
+            type: string
+            enum:
+            - isolated
+      - type: object
+        additionalProperties: false
+        required:
+        - mode
+        - storage_ref
+        - resource_id
+        - binding_version
+        properties:
+          mode:
+            type: string
+            enum:
+            - shared
+          storage_ref:
+            type: string
+            maxLength: 128
+            pattern: ^[A-Za-z0-9_.-]+$
+          resource_id:
+            type: string
+            maxLength: 128
+            pattern: ^[A-Za-z0-9_.-]+$
+          binding_version:
+            type: integer
+            minimum: 1
+    TrustedExecutionGovernance:
+      type: object
+      additionalProperties: false
+      description: 可信 Platform 运行层提供原调用与策略身份，不接受模型伪造，不携带宿主路径；完整原分配事实必须在命令副作用前持久登记。
+      required:
+      - context
+      - lease_ref
+      - platform_operation_id
+      - request_digest
+      - source_identity
+      - workspace_id
+      - authorized_work_write
+      properties:
+        context:
+          allOf:
+          - $ref: '#/components/schemas/PlatformCallContext'
+          - type: object
+            properties:
+              invocation_id:
+                type: string
+                nullable: false
+                minLength: 1
+              execution_id:
+                type: string
+                nullable: false
+                minLength: 1
+              attempt_id:
+                type: string
+                nullable: false
+                minLength: 1
+        lease_ref:
+          $ref: '#/components/schemas/PlatformLeaseRef'
+        platform_operation_id:
+          type: string
+          minLength: 1
+          maxLength: 256
+          pattern: ^[^\u0000-\u001f\u007f\u2028\u2029]+$
+        request_digest:
+          type: string
+          pattern: ^[0-9a-f]{64}$
+        source_identity:
+          type: string
+          pattern: ^[0-9a-f]{64}$
+        workspace_id:
+          type: string
+          minLength: 1
+          maxLength: 256
+          pattern: ^[^\u0000-\u001f\u007f\u2028\u2029]+$
+        authorized_work_write:
+          type: boolean
+          enum:
+          - true
+          description: 未具备逐调用只读work内核机制，false在副作用前拒绝。

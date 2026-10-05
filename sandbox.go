@@ -37,6 +37,12 @@ type Sandbox struct {
 
 	lifecycleMu      sync.Mutex
 	heartbeatStopped bool
+	heartbeatErr     error
+
+	// defaultEnv 是客户端侧默认执行环境；服务端会话上下文已不支持 env（协议仅 cwd），
+	// 每次 Run/RunAsync 与 per-call WithExecEnv 合并下发（per-call 优先）。
+	defaultEnvMu sync.RWMutex
+	defaultEnv   map[string]string
 }
 
 // New creates a Sandbox object. No Session/Workspace is created, no heartbeat started.
@@ -119,7 +125,6 @@ func (sb *Sandbox) doOpen(ctx context.Context) error {
 		WorkspaceRetention:  sb.opts.workspaceRetention,
 		WorkspaceTTLSeconds: sb.opts.workspaceTTLSec,
 		IdempotencyKey:      sb.opts.idempotencyKey,
-		Env:                 sb.opts.env,
 		Metadata:            sb.opts.metadata,
 	}
 	session, err := sb.client.CreateSession(ctx, req)
@@ -132,6 +137,12 @@ func (sb *Sandbox) doOpen(ctx context.Context) error {
 	sb.workspaceID = session.WorkspaceID
 	sb.opened = true
 	sb.mu.Unlock()
+	sb.defaultEnvMu.Lock()
+	sb.defaultEnv = make(map[string]string, len(sb.opts.env))
+	for key, value := range sb.opts.env {
+		sb.defaultEnv[key] = value
+	}
+	sb.defaultEnvMu.Unlock()
 
 	// Start heartbeat
 	heartbeatOn := !sb.opts.disableHeartbeat && sb.opts.heartbeatInterval > 0 && sb.opts.heartbeatExtend > 0
@@ -182,12 +193,43 @@ func (sb *Sandbox) SetCwd(ctx context.Context, cwd string) error {
 	return err
 }
 
-// SetEnv modifies the session-level environment variables (Session mode only).
-func (sb *Sandbox) SetEnv(ctx context.Context, env map[string]string) error {
+// SetEnv sets client-side default environment variables merged into every
+// subsequent exec (Session mode only; per-call WithExecEnv takes precedence).
+// The server-side session context no longer accepts env (cwd only).
+func (sb *Sandbox) SetEnv(_ context.Context, env map[string]string) error {
 	if !sb.IsOpen() {
 		return ErrNotOpened
 	}
-	_, err := sb.client.PatchSessionContext(ctx, sb.SessionID(), SessionContext{Env: env})
+	merged := make(map[string]string, len(env))
+	for k, v := range env {
+		merged[k] = v
+	}
+	sb.defaultEnvMu.Lock()
+	sb.defaultEnv = merged
+	sb.defaultEnvMu.Unlock()
+	return nil
+}
+
+func (sb *Sandbox) snapshotDefaultEnv() map[string]string {
+	sb.defaultEnvMu.RLock()
+	defer sb.defaultEnvMu.RUnlock()
+	if len(sb.defaultEnv) == 0 {
+		return nil
+	}
+	out := make(map[string]string, len(sb.defaultEnv))
+	for k, v := range sb.defaultEnv {
+		out[k] = v
+	}
+	return out
+}
+
+// Resume recreates or validates the runtime for a suspended/active logical session
+// (Session mode only). Exec also lazily resumes; Resume is the explicit pre-flight check.
+func (sb *Sandbox) Resume(ctx context.Context) error {
+	if !sb.IsOpen() {
+		return ErrNotOpened
+	}
+	_, err := sb.client.ResumeSession(ctx, sb.SessionID())
 	return err
 }
 
@@ -243,27 +285,6 @@ func (sb *Sandbox) CloseContext(ctx context.Context) error {
 	sb.mu.Unlock()
 	sb.logf("closed session=%s", sid)
 	return nil
-}
-
-// heartbeatLoop periodically renews the session lease until context is cancelled.
-func (sb *Sandbox) heartbeatLoop(ctx context.Context) {
-	defer sb.wg.Done()
-	ticker := time.NewTicker(sb.opts.heartbeatInterval)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-ticker.C:
-			renewCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
-			sid := sb.SessionID()
-			_, err := sb.client.RenewSession(renewCtx, sid, sb.opts.heartbeatExtend)
-			cancel()
-			if err != nil {
-				sb.logf("heartbeat renew failed session=%s err=%v (will retry)", sid, err)
-			}
-		}
-	}
 }
 
 func (sb *Sandbox) logf(format string, args ...any) {

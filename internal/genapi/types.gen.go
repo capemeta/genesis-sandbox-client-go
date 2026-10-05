@@ -9,26 +9,48 @@ import (
 	"time"
 
 	"github.com/oapi-codegen/runtime"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
 // Defines values for AsyncExecRequestLanguage.
 const (
+	AsyncExecRequestLanguageBash       AsyncExecRequestLanguage = "bash"
 	AsyncExecRequestLanguageJavascript AsyncExecRequestLanguage = "javascript"
 	AsyncExecRequestLanguageNode       AsyncExecRequestLanguage = "node"
 	AsyncExecRequestLanguagePython     AsyncExecRequestLanguage = "python"
-	AsyncExecRequestLanguageTypescript AsyncExecRequestLanguage = "typescript"
+	AsyncExecRequestLanguageShell      AsyncExecRequestLanguage = "shell"
 )
 
 // Valid indicates whether the value is a known member of the AsyncExecRequestLanguage enum.
 func (e AsyncExecRequestLanguage) Valid() bool {
 	switch e {
+	case AsyncExecRequestLanguageBash:
+		return true
 	case AsyncExecRequestLanguageJavascript:
 		return true
 	case AsyncExecRequestLanguageNode:
 		return true
 	case AsyncExecRequestLanguagePython:
 		return true
-	case AsyncExecRequestLanguageTypescript:
+	case AsyncExecRequestLanguageShell:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AsyncExecRequestSubprocessPolicy.
+const (
+	AsyncExecRequestSubprocessPolicyAllow AsyncExecRequestSubprocessPolicy = "allow"
+	AsyncExecRequestSubprocessPolicyDeny  AsyncExecRequestSubprocessPolicy = "deny"
+)
+
+// Valid indicates whether the value is a known member of the AsyncExecRequestSubprocessPolicy enum.
+func (e AsyncExecRequestSubprocessPolicy) Valid() bool {
+	switch e {
+	case AsyncExecRequestSubprocessPolicyAllow:
+		return true
+	case AsyncExecRequestSubprocessPolicyDeny:
 		return true
 	default:
 		return false
@@ -167,6 +189,27 @@ func (e EnvironmentResolutionSelectionMode) Valid() bool {
 	}
 }
 
+// Defines values for ErrorResponseDetailsReason.
+const (
+	MatchingProfilesUnavailable ErrorResponseDetailsReason = "matching_profiles_unavailable"
+	NoMatchingProfile           ErrorResponseDetailsReason = "no_matching_profile"
+	UnknownCapabilities         ErrorResponseDetailsReason = "unknown_capabilities"
+)
+
+// Valid indicates whether the value is a known member of the ErrorResponseDetailsReason enum.
+func (e ErrorResponseDetailsReason) Valid() bool {
+	switch e {
+	case MatchingProfilesUnavailable:
+		return true
+	case NoMatchingProfile:
+		return true
+	case UnknownCapabilities:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ErrorResponseErrorCode.
 const (
 	CONFLICT               ErrorResponseErrorCode = "CONFLICT"
@@ -265,11 +308,13 @@ func (e ErrorResponseErrorCode) Valid() bool {
 
 // Defines values for ExecRecordStatus.
 const (
-	ExecRecordStatusCancelled ExecRecordStatus = "cancelled"
-	ExecRecordStatusFailed    ExecRecordStatus = "failed"
-	ExecRecordStatusQueued    ExecRecordStatus = "queued"
-	ExecRecordStatusRunning   ExecRecordStatus = "running"
-	ExecRecordStatusSucceeded ExecRecordStatus = "succeeded"
+	ExecRecordStatusCancelled   ExecRecordStatus = "cancelled"
+	ExecRecordStatusFailed      ExecRecordStatus = "failed"
+	ExecRecordStatusInterrupted ExecRecordStatus = "interrupted"
+	ExecRecordStatusQueued      ExecRecordStatus = "queued"
+	ExecRecordStatusRunning     ExecRecordStatus = "running"
+	ExecRecordStatusSucceeded   ExecRecordStatus = "succeeded"
+	ExecRecordStatusTimedOut    ExecRecordStatus = "timed_out"
 )
 
 // Valid indicates whether the value is a known member of the ExecRecordStatus enum.
@@ -279,11 +324,15 @@ func (e ExecRecordStatus) Valid() bool {
 		return true
 	case ExecRecordStatusFailed:
 		return true
+	case ExecRecordStatusInterrupted:
+		return true
 	case ExecRecordStatusQueued:
 		return true
 	case ExecRecordStatusRunning:
 		return true
 	case ExecRecordStatusSucceeded:
+		return true
+	case ExecRecordStatusTimedOut:
 		return true
 	default:
 		return false
@@ -292,22 +341,43 @@ func (e ExecRecordStatus) Valid() bool {
 
 // Defines values for ExecSessionRequestLanguage.
 const (
+	ExecSessionRequestLanguageBash       ExecSessionRequestLanguage = "bash"
 	ExecSessionRequestLanguageJavascript ExecSessionRequestLanguage = "javascript"
 	ExecSessionRequestLanguageNode       ExecSessionRequestLanguage = "node"
 	ExecSessionRequestLanguagePython     ExecSessionRequestLanguage = "python"
-	ExecSessionRequestLanguageTypescript ExecSessionRequestLanguage = "typescript"
+	ExecSessionRequestLanguageShell      ExecSessionRequestLanguage = "shell"
 )
 
 // Valid indicates whether the value is a known member of the ExecSessionRequestLanguage enum.
 func (e ExecSessionRequestLanguage) Valid() bool {
 	switch e {
+	case ExecSessionRequestLanguageBash:
+		return true
 	case ExecSessionRequestLanguageJavascript:
 		return true
 	case ExecSessionRequestLanguageNode:
 		return true
 	case ExecSessionRequestLanguagePython:
 		return true
-	case ExecSessionRequestLanguageTypescript:
+	case ExecSessionRequestLanguageShell:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ExecSessionRequestSubprocessPolicy.
+const (
+	ExecSessionRequestSubprocessPolicyAllow ExecSessionRequestSubprocessPolicy = "allow"
+	ExecSessionRequestSubprocessPolicyDeny  ExecSessionRequestSubprocessPolicy = "deny"
+)
+
+// Valid indicates whether the value is a known member of the ExecSessionRequestSubprocessPolicy enum.
+func (e ExecSessionRequestSubprocessPolicy) Valid() bool {
+	switch e {
+	case ExecSessionRequestSubprocessPolicyAllow:
+		return true
+	case ExecSessionRequestSubprocessPolicyDeny:
 		return true
 	default:
 		return false
@@ -329,21 +399,81 @@ func (e ExecSessionResultEnvironment) Valid() bool {
 	}
 }
 
-// Defines values for LeaseRequestRiskLevel.
+// Defines values for ExecSessionResultStatus.
 const (
-	High   LeaseRequestRiskLevel = "high"
-	Low    LeaseRequestRiskLevel = "low"
-	Medium LeaseRequestRiskLevel = "medium"
+	ExecSessionResultStatusCancelled   ExecSessionResultStatus = "cancelled"
+	ExecSessionResultStatusFailed      ExecSessionResultStatus = "failed"
+	ExecSessionResultStatusInterrupted ExecSessionResultStatus = "interrupted"
+	ExecSessionResultStatusQueued      ExecSessionResultStatus = "queued"
+	ExecSessionResultStatusRunning     ExecSessionResultStatus = "running"
+	ExecSessionResultStatusSucceeded   ExecSessionResultStatus = "succeeded"
+	ExecSessionResultStatusTimedOut    ExecSessionResultStatus = "timed_out"
 )
 
-// Valid indicates whether the value is a known member of the LeaseRequestRiskLevel enum.
-func (e LeaseRequestRiskLevel) Valid() bool {
+// Valid indicates whether the value is a known member of the ExecSessionResultStatus enum.
+func (e ExecSessionResultStatus) Valid() bool {
 	switch e {
-	case High:
+	case ExecSessionResultStatusCancelled:
 		return true
-	case Low:
+	case ExecSessionResultStatusFailed:
 		return true
-	case Medium:
+	case ExecSessionResultStatusInterrupted:
+		return true
+	case ExecSessionResultStatusQueued:
+		return true
+	case ExecSessionResultStatusRunning:
+		return true
+	case ExecSessionResultStatusSucceeded:
+		return true
+	case ExecSessionResultStatusTimedOut:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for JobResultStatus.
+const (
+	JobResultStatusCancelled   JobResultStatus = "cancelled"
+	JobResultStatusFailed      JobResultStatus = "failed"
+	JobResultStatusInterrupted JobResultStatus = "interrupted"
+	JobResultStatusQueued      JobResultStatus = "queued"
+	JobResultStatusRunning     JobResultStatus = "running"
+	JobResultStatusSucceeded   JobResultStatus = "succeeded"
+	JobResultStatusTimedOut    JobResultStatus = "timed_out"
+)
+
+// Valid indicates whether the value is a known member of the JobResultStatus enum.
+func (e JobResultStatus) Valid() bool {
+	switch e {
+	case JobResultStatusCancelled:
+		return true
+	case JobResultStatusFailed:
+		return true
+	case JobResultStatusInterrupted:
+		return true
+	case JobResultStatusQueued:
+		return true
+	case JobResultStatusRunning:
+		return true
+	case JobResultStatusSucceeded:
+		return true
+	case JobResultStatusTimedOut:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MaintenanceCallStopConfirmed.
+const (
+	MaintenanceCallStopConfirmedTrue MaintenanceCallStopConfirmed = true
+)
+
+// Valid indicates whether the value is a known member of the MaintenanceCallStopConfirmed enum.
+func (e MaintenanceCallStopConfirmed) Valid() bool {
+	switch e {
+	case MaintenanceCallStopConfirmedTrue:
 		return true
 	default:
 		return false
@@ -368,6 +498,36 @@ func (e NetworkPolicyMode) Valid() bool {
 	case Internet:
 		return true
 	case None:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PlatformCallContextSubjectKind.
+const (
+	PlatformCallContextSubjectKindEnterprise PlatformCallContextSubjectKind = "enterprise"
+)
+
+// Valid indicates whether the value is a known member of the PlatformCallContextSubjectKind enum.
+func (e PlatformCallContextSubjectKind) Valid() bool {
+	switch e {
+	case PlatformCallContextSubjectKindEnterprise:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SharedStorageResourceIdentityFilesystem.
+const (
+	Ext4 SharedStorageResourceIdentityFilesystem = "ext4"
+)
+
+// Valid indicates whether the value is a known member of the SharedStorageResourceIdentityFilesystem enum.
+func (e SharedStorageResourceIdentityFilesystem) Valid() bool {
+	switch e {
+	case Ext4:
 		return true
 	default:
 		return false
@@ -407,6 +567,36 @@ func (e SubmitJobRequestLanguage) Valid() bool {
 	case SubmitJobRequestLanguagePython:
 		return true
 	case SubmitJobRequestLanguageTypescript:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for TrustedExecutionGovernanceAuthorizedWorkWrite.
+const (
+	TrustedExecutionGovernanceAuthorizedWorkWriteTrue TrustedExecutionGovernanceAuthorizedWorkWrite = true
+)
+
+// Valid indicates whether the value is a known member of the TrustedExecutionGovernanceAuthorizedWorkWrite enum.
+func (e TrustedExecutionGovernanceAuthorizedWorkWrite) Valid() bool {
+	switch e {
+	case TrustedExecutionGovernanceAuthorizedWorkWriteTrue:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for TrustedExecutionGovernanceContextSubjectKind.
+const (
+	TrustedExecutionGovernanceContextSubjectKindEnterprise TrustedExecutionGovernanceContextSubjectKind = "enterprise"
+)
+
+// Valid indicates whether the value is a known member of the TrustedExecutionGovernanceContextSubjectKind enum.
+func (e TrustedExecutionGovernanceContextSubjectKind) Valid() bool {
+	switch e {
+	case TrustedExecutionGovernanceContextSubjectKindEnterprise:
 		return true
 	default:
 		return false
@@ -467,6 +657,36 @@ func (e WorkspaceRetentionMode) Valid() bool {
 	}
 }
 
+// Defines values for WorkspaceBindingRequest0Mode.
+const (
+	Isolated WorkspaceBindingRequest0Mode = "isolated"
+)
+
+// Valid indicates whether the value is a known member of the WorkspaceBindingRequest0Mode enum.
+func (e WorkspaceBindingRequest0Mode) Valid() bool {
+	switch e {
+	case Isolated:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for WorkspaceBindingRequest1Mode.
+const (
+	Shared WorkspaceBindingRequest1Mode = "shared"
+)
+
+// Valid indicates whether the value is a known member of the WorkspaceBindingRequest1Mode enum.
+func (e WorkspaceBindingRequest1Mode) Valid() bool {
+	switch e {
+	case Shared:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for WorkspaceFileInfoEnvironment.
 const (
 	WorkspaceFileInfoEnvironmentWorkspace WorkspaceFileInfoEnvironment = "workspace"
@@ -500,14 +720,135 @@ func (e WorkspaceFileInfoKind) Valid() bool {
 	}
 }
 
+// Defines values for WorkspaceLifecycleLookupState.
+const (
+	WorkspaceLifecycleLookupStateFound          WorkspaceLifecycleLookupState = "found"
+	WorkspaceLifecycleLookupStateHistoryExpired WorkspaceLifecycleLookupState = "history_expired"
+	WorkspaceLifecycleLookupStateUnknown        WorkspaceLifecycleLookupState = "unknown"
+)
+
+// Valid indicates whether the value is a known member of the WorkspaceLifecycleLookupState enum.
+func (e WorkspaceLifecycleLookupState) Valid() bool {
+	switch e {
+	case WorkspaceLifecycleLookupStateFound:
+		return true
+	case WorkspaceLifecycleLookupStateHistoryExpired:
+		return true
+	case WorkspaceLifecycleLookupStateUnknown:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for WorkspaceLifecycleReceiptState.
+const (
+	WorkspaceLifecycleReceiptStateActive   WorkspaceLifecycleReceiptState = "active"
+	WorkspaceLifecycleReceiptStatePaused   WorkspaceLifecycleReceiptState = "paused"
+	WorkspaceLifecycleReceiptStateTerminal WorkspaceLifecycleReceiptState = "terminal"
+)
+
+// Valid indicates whether the value is a known member of the WorkspaceLifecycleReceiptState enum.
+func (e WorkspaceLifecycleReceiptState) Valid() bool {
+	switch e {
+	case WorkspaceLifecycleReceiptStateActive:
+		return true
+	case WorkspaceLifecycleReceiptStatePaused:
+		return true
+	case WorkspaceLifecycleReceiptStateTerminal:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for WorkspaceLifecycleRequestState.
+const (
+	WorkspaceLifecycleRequestStateActive   WorkspaceLifecycleRequestState = "active"
+	WorkspaceLifecycleRequestStatePaused   WorkspaceLifecycleRequestState = "paused"
+	WorkspaceLifecycleRequestStateTerminal WorkspaceLifecycleRequestState = "terminal"
+)
+
+// Valid indicates whether the value is a known member of the WorkspaceLifecycleRequestState enum.
+func (e WorkspaceLifecycleRequestState) Valid() bool {
+	switch e {
+	case WorkspaceLifecycleRequestStateActive:
+		return true
+	case WorkspaceLifecycleRequestStatePaused:
+		return true
+	case WorkspaceLifecycleRequestStateTerminal:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for WorkspacePreparationReceiptStatus.
+const (
+	WorkspacePreparationReceiptStatusPrepared WorkspacePreparationReceiptStatus = "prepared"
+	WorkspacePreparationReceiptStatusUnknown  WorkspacePreparationReceiptStatus = "unknown"
+)
+
+// Valid indicates whether the value is a known member of the WorkspacePreparationReceiptStatus enum.
+func (e WorkspacePreparationReceiptStatus) Valid() bool {
+	switch e {
+	case WorkspacePreparationReceiptStatusPrepared:
+		return true
+	case WorkspacePreparationReceiptStatusUnknown:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for WorkspacePurgeReceiptStatus.
+const (
+	WorkspacePurgeReceiptStatusPurged  WorkspacePurgeReceiptStatus = "purged"
+	WorkspacePurgeReceiptStatusUnknown WorkspacePurgeReceiptStatus = "unknown"
+)
+
+// Valid indicates whether the value is a known member of the WorkspacePurgeReceiptStatus enum.
+func (e WorkspacePurgeReceiptStatus) Valid() bool {
+	switch e {
+	case WorkspacePurgeReceiptStatusPurged:
+		return true
+	case WorkspacePurgeReceiptStatusUnknown:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for WorkspaceViewFactsViewState.
+const (
+	WorkspaceViewFactsViewStatePrepared   WorkspaceViewFactsViewState = "prepared"
+	WorkspaceViewFactsViewStateSealed     WorkspaceViewFactsViewState = "sealed"
+	WorkspaceViewFactsViewStateUnprepared WorkspaceViewFactsViewState = "unprepared"
+)
+
+// Valid indicates whether the value is a known member of the WorkspaceViewFactsViewState enum.
+func (e WorkspaceViewFactsViewState) Valid() bool {
+	switch e {
+	case WorkspaceViewFactsViewStatePrepared:
+		return true
+	case WorkspaceViewFactsViewStateSealed:
+		return true
+	case WorkspaceViewFactsViewStateUnprepared:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ListJobsParamsStatus.
 const (
-	ListJobsParamsStatusCancelled ListJobsParamsStatus = "cancelled"
-	ListJobsParamsStatusFailed    ListJobsParamsStatus = "failed"
-	ListJobsParamsStatusQueued    ListJobsParamsStatus = "queued"
-	ListJobsParamsStatusRunning   ListJobsParamsStatus = "running"
-	ListJobsParamsStatusSucceeded ListJobsParamsStatus = "succeeded"
-	ListJobsParamsStatusTimedOut  ListJobsParamsStatus = "timed_out"
+	ListJobsParamsStatusCancelled   ListJobsParamsStatus = "cancelled"
+	ListJobsParamsStatusFailed      ListJobsParamsStatus = "failed"
+	ListJobsParamsStatusInterrupted ListJobsParamsStatus = "interrupted"
+	ListJobsParamsStatusQueued      ListJobsParamsStatus = "queued"
+	ListJobsParamsStatusRunning     ListJobsParamsStatus = "running"
+	ListJobsParamsStatusSucceeded   ListJobsParamsStatus = "succeeded"
+	ListJobsParamsStatusTimedOut    ListJobsParamsStatus = "timed_out"
 )
 
 // Valid indicates whether the value is a known member of the ListJobsParamsStatus enum.
@@ -516,6 +857,8 @@ func (e ListJobsParamsStatus) Valid() bool {
 	case ListJobsParamsStatusCancelled:
 		return true
 	case ListJobsParamsStatusFailed:
+		return true
+	case ListJobsParamsStatusInterrupted:
 		return true
 	case ListJobsParamsStatusQueued:
 		return true
@@ -545,6 +888,24 @@ func (e UploadSessionFileParamsIfNoneMatch) Valid() bool {
 	}
 }
 
+// Defines values for PrepareOrSealWorkspaceViewParamsAction.
+const (
+	Prepare PrepareOrSealWorkspaceViewParamsAction = "prepare"
+	Seal    PrepareOrSealWorkspaceViewParamsAction = "seal"
+)
+
+// Valid indicates whether the value is a known member of the PrepareOrSealWorkspaceViewParamsAction enum.
+func (e PrepareOrSealWorkspaceViewParamsAction) Valid() bool {
+	switch e {
+	case Prepare:
+		return true
+	case Seal:
+		return true
+	default:
+		return false
+	}
+}
+
 // Artifact defines model for Artifact.
 type Artifact struct {
 	ArtifactId  *string    `json:"artifact_id,omitempty"`
@@ -565,12 +926,24 @@ type AsyncExecRequest struct {
 	Code        *string   `json:"code,omitempty"`
 	Command     *[]string `json:"command,omitempty"`
 
-	// Env Per-exec env overrides merged over session default_env.
+	// Env Environment variables are applied only to this execution and are never persisted or returned.
 	Env      *map[string]string        `json:"env,omitempty"`
 	Language *AsyncExecRequestLanguage `json:"language,omitempty"`
 
+	// OperationId Caller operation identity, deduplicated per principal and session. Reuse after an ambiguous transport failure.
+	OperationId *string `json:"operation_id,omitempty"`
+
+	// OutputDirectory Optional fresh invocation output directory; bound to original execution request.
+	OutputDirectory *string `json:"output_directory,omitempty"`
+
+	// SubprocessPolicy deny requires explicit command and kernel seccomp enforcement; threads remain allowed.
+	SubprocessPolicy *AsyncExecRequestSubprocessPolicy `json:"subprocess_policy,omitempty"`
+
 	// TimeoutSeconds Exec timeout (starts counting from running, not queued). Bounded by profile limit.
 	TimeoutSeconds *int `json:"timeout_seconds,omitempty"`
+
+	// TrustedGovernance 可信 Platform 运行层提供原调用与策略身份，不接受模型伪造，不携带宿主路径；完整原分配事实必须在命令副作用前持久登记。
+	TrustedGovernance *TrustedExecutionGovernance `json:"trusted_governance,omitempty"`
 
 	// WorkingDir Per-exec working directory override. Defaults to session default_cwd.
 	WorkingDir *string `json:"working_dir,omitempty"`
@@ -578,6 +951,9 @@ type AsyncExecRequest struct {
 
 // AsyncExecRequestLanguage defines model for AsyncExecRequest.Language.
 type AsyncExecRequestLanguage string
+
+// AsyncExecRequestSubprocessPolicy deny requires explicit command and kernel seccomp enforcement; threads remain allowed.
+type AsyncExecRequestSubprocessPolicy string
 
 // AuditEvent defines model for AuditEvent.
 type AuditEvent struct {
@@ -604,16 +980,20 @@ type AuditEventList struct {
 
 // BuildDependencyRequest Build dependencies for an already resolved immutable environment.
 type BuildDependencyRequest struct {
-	Environment  *ExactEnvironmentSelector       `json:"environment,omitempty"`
-	Language     *BuildDependencyRequestLanguage `json:"language,omitempty"`
-	Lockfile     *string                         `json:"lockfile,omitempty"`
-	Manifest     *string                         `json:"manifest,omitempty"`
-	Packages     *[]string                       `json:"packages,omitempty"`
-	ResolutionId *string                         `json:"resolution_id,omitempty"`
+	Environment *ExactEnvironmentSelector `json:"environment,omitempty"`
+
+	// Language Dependency graph language being built, not a profile name.
+	Language *BuildDependencyRequestLanguage `json:"language,omitempty"`
+	Lockfile *string                         `json:"lockfile,omitempty"`
+	Manifest *string                         `json:"manifest,omitempty"`
+	Packages *[]string                       `json:"packages,omitempty"`
+
+	// ResolutionId Environment resolution ticket from /v1/environment:resolve.
+	ResolutionId *string `json:"resolution_id,omitempty"`
 	union        json.RawMessage
 }
 
-// BuildDependencyRequestLanguage defines model for BuildDependencyRequest.Language.
+// BuildDependencyRequestLanguage Dependency graph language being built, not a profile name.
 type BuildDependencyRequestLanguage string
 
 // BuildDependencyRequest0 defines model for BuildDependencyRequest.0.
@@ -633,9 +1013,12 @@ type CatalogCard struct {
 	Limits       *CatalogCardLimits   `json:"limits,omitempty"`
 	Name         string               `json:"name"`
 
-	// ProfileRevision Opaque immutable revision for exact Resolve after Catalog selection.
-	ProfileRevision string    `json:"profile_revision"`
-	Tags            *[]string `json:"tags,omitempty"`
+	// ProfileRevision Opaque immutable revision for exact Resolve after Catalog selection; omitted while immutable image identity cannot be verified.
+	ProfileRevision *string `json:"profile_revision,omitempty"`
+
+	// RevisionAvailable True only when this card carries a verified immutable profile revision. When false, omit profile_revision and resolve by profile name to pin the current image.
+	RevisionAvailable bool      `json:"revision_available"`
+	Tags              *[]string `json:"tags,omitempty"`
 
 	// UseWhen Display-only guidance; never consumed by the resolver.
 	UseWhen *[]string `json:"use_when,omitempty"`
@@ -653,17 +1036,21 @@ type CatalogCardLimits struct {
 	MaxExecTimeoutSeconds *int   `json:"max_exec_timeout_seconds,omitempty"`
 	MaxLogBytes           *int64 `json:"max_log_bytes,omitempty"`
 	MaxSessionTtlSeconds  *int   `json:"max_session_ttl_seconds,omitempty"`
-	WorkspaceQuotaMb      *int   `json:"workspace_quota_mb,omitempty"`
+
+	// WorkspaceQuotaMb Maximum quota accepted for a Session workspace; newly created Session workspaces use this size, and pre-created workspaces may be smaller but cannot exceed it.
+	WorkspaceQuotaMb *int `json:"workspace_quota_mb,omitempty"`
 }
 
 // CreateSessionRequest defines model for CreateSessionRequest.
 type CreateSessionRequest struct {
-	// Environment Unified environment selection. Field presence expresses intent: `profile` for explicit selection (fail-closed), `hints` for auto selection, both absent for the default profile. `profile` and `hints` are mutually exclusive (INVALID_SELECTOR when both present).
-	Environment    *EnvironmentSelector `json:"environment,omitempty"`
-	IdempotencyKey *string              `json:"idempotency_key,omitempty"`
-	Metadata       *map[string]string   `json:"metadata,omitempty"`
+	// Environment Unified environment selection. `profile` means an explicit environment name chosen by the caller; `hints` means capability-based auto selection performed by the server; both absent means the default public profile. `profile` and `hints` are mutually exclusive (INVALID_SELECTOR when both present).
+	Environment *EnvironmentSelector `json:"environment,omitempty"`
 
-	// ResolutionId Resolution ticket from /v1/environment:resolve. Mutually exclusive with environment.
+	// IdempotencyKey Maximum 128 UTF-8 bytes.
+	IdempotencyKey *string            `json:"idempotency_key,omitempty"`
+	Metadata       *map[string]string `json:"metadata,omitempty"`
+
+	// ResolutionId Environment resolution ticket from /v1/environment:resolve. Reuses an already resolved immutable environment result. Mutually exclusive with environment.
 	ResolutionId        *string                                 `json:"resolution_id,omitempty"`
 	StatePolicy         *CreateSessionRequestStatePolicy        `json:"state_policy,omitempty"`
 	TtlSeconds          *int                                    `json:"ttl_seconds,omitempty"`
@@ -680,11 +1067,12 @@ type CreateSessionRequestWorkspaceRetention string
 
 // CreateWorkspaceRequest defines model for CreateWorkspaceRequest.
 type CreateWorkspaceRequest struct {
-	Metadata      *map[string]string                   `json:"metadata,omitempty"`
-	QuotaMb       *int                                 `json:"quota_mb,omitempty"`
-	RetentionMode *CreateWorkspaceRequestRetentionMode `json:"retention_mode,omitempty"`
-	TtlSeconds    *int                                 `json:"ttl_seconds,omitempty"`
-	WorkspaceId   *string                              `json:"workspace_id,omitempty"`
+	Metadata         *map[string]string                   `json:"metadata,omitempty"`
+	QuotaMb          *int                                 `json:"quota_mb,omitempty"`
+	RetentionMode    *CreateWorkspaceRequestRetentionMode `json:"retention_mode,omitempty"`
+	TtlSeconds       *int                                 `json:"ttl_seconds,omitempty"`
+	WorkspaceBinding *WorkspaceBindingRequest             `json:"workspace_binding,omitempty"`
+	WorkspaceId      *string                              `json:"workspace_id,omitempty"`
 }
 
 // CreateWorkspaceRequestRetentionMode defines model for CreateWorkspaceRequest.RetentionMode.
@@ -720,7 +1108,7 @@ type DependencyBuildStatus string
 type EffectiveEnvironment struct {
 	Capabilities *[]string `json:"capabilities,omitempty"`
 
-	// Degraded True only when the policy engine actively downgraded the request.
+	// Degraded True only when an approved policy/runtime fallback changed the requested execution guarantee.
 	Degraded    *bool   `json:"degraded,omitempty"`
 	ProfileName *string `json:"profile_name,omitempty"`
 
@@ -759,8 +1147,12 @@ type EnvironmentCatalog struct {
 
 // EnvironmentResolution defines model for EnvironmentResolution.
 type EnvironmentResolution struct {
-	Capabilities    *[]string                           `json:"capabilities,omitempty"`
+	Capabilities *[]string `json:"capabilities,omitempty"`
+
+	// Degraded True when policy approved a runtime fallback for this resolution.
+	Degraded        *bool                               `json:"degraded,omitempty"`
 	ExpiresAt       *time.Time                          `json:"expires_at,omitempty"`
+	Facts           *WorkspaceViewFacts                 `json:"facts,omitempty"`
 	ProfileName     *string                             `json:"profile_name,omitempty"`
 	ProfileRevision *string                             `json:"profile_revision,omitempty"`
 	ResolutionId    *string                             `json:"resolution_id,omitempty"`
@@ -771,7 +1163,7 @@ type EnvironmentResolution struct {
 // EnvironmentResolutionSelectionMode defines model for EnvironmentResolution.SelectionMode.
 type EnvironmentResolutionSelectionMode string
 
-// EnvironmentSelector Unified environment selection. Field presence expresses intent: `profile` for explicit selection (fail-closed), `hints` for auto selection, both absent for the default profile. `profile` and `hints` are mutually exclusive (INVALID_SELECTOR when both present).
+// EnvironmentSelector Unified environment selection. `profile` means an explicit environment name chosen by the caller; `hints` means capability-based auto selection performed by the server; both absent means the default public profile. `profile` and `hints` are mutually exclusive (INVALID_SELECTOR when both present).
 type EnvironmentSelector struct {
 	Hints   *EnvHints         `json:"hints,omitempty"`
 	Profile *ProfileReference `json:"profile,omitempty"`
@@ -779,20 +1171,27 @@ type EnvironmentSelector struct {
 
 // ErrorResponse Unified error body (RFC 9457 spirit). request_id correlates with server TraceID and is always present. 429 responses also carry a Retry-After header.
 type ErrorResponse struct {
-	// Details Machine-readable context. Always includes retryable and may include field, resource_type, retry_after_seconds, or unmet capabilities.
+	// Details Machine-readable context. NO_MATCHING_PROFILE includes a reason, unknown and unmet capabilities, and the count of unavailable matching candidates without exposing profile names.
 	Details   ErrorResponse_Details  `json:"details"`
 	ErrorCode ErrorResponseErrorCode `json:"error_code"`
 	Message   string                 `json:"message"`
 	RequestId string                 `json:"request_id"`
 }
 
-// ErrorResponse_Details Machine-readable context. Always includes retryable and may include field, resource_type, retry_after_seconds, or unmet capabilities.
+// ErrorResponseDetailsReason defines model for ErrorResponse.Details.Reason.
+type ErrorResponseDetailsReason string
+
+// ErrorResponse_Details Machine-readable context. NO_MATCHING_PROFILE includes a reason, unknown and unmet capabilities, and the count of unavailable matching candidates without exposing profile names.
 type ErrorResponse_Details struct {
-	Field                *string                `json:"field,omitempty"`
-	ResourceType         *string                `json:"resource_type,omitempty"`
-	RetryAfterSeconds    *int                   `json:"retry_after_seconds,omitempty"`
-	Retryable            bool                   `json:"retryable"`
-	AdditionalProperties map[string]interface{} `json:"-"`
+	Field                     *string                     `json:"field,omitempty"`
+	Reason                    *ErrorResponseDetailsReason `json:"reason,omitempty"`
+	ResourceType              *string                     `json:"resource_type,omitempty"`
+	RetryAfterSeconds         *int                        `json:"retry_after_seconds,omitempty"`
+	Retryable                 bool                        `json:"retryable"`
+	UnavailableCandidateCount *int                        `json:"unavailable_candidate_count,omitempty"`
+	UnknownCapabilities       *[]string                   `json:"unknown_capabilities,omitempty"`
+	UnmetCapabilities         *[]string                   `json:"unmet_capabilities,omitempty"`
+	AdditionalProperties      map[string]interface{}      `json:"-"`
 }
 
 // ErrorResponseErrorCode defines model for ErrorResponse.ErrorCode.
@@ -808,23 +1207,28 @@ type ExactEnvironmentSelector struct {
 
 // ExecRecord Unified exec record. Shape aligns with JobResult for client parsing consistency (§7.5). For sync exec, stdout/stderr are inline. For async exec, use the logs SSE endpoint.
 type ExecRecord struct {
-	CreatedAt  *time.Time `json:"created_at,omitempty"`
-	DurationMs *int64     `json:"duration_ms,omitempty"`
+	CreatedAt  time.Time `json:"created_at"`
+	DurationMs *int64    `json:"duration_ms,omitempty"`
 
 	// EffectiveEnvironment Answers what was selected, why, and whether it was degraded. Never exposes image/runtime/host internals.
 	EffectiveEnvironment *EffectiveEnvironment `json:"effective_environment,omitempty"`
 
-	// ErrorCode Machine-readable error code (EXEC_CANCELLED, EXEC_TIMEOUT, SERVICE_RESTART, STREAM_INTERRUPTED).
+	// ErrorCode Machine-readable error code. SERVICE_RESTART_INTERRUPTED means the exec began but its result was not confirmed; SERVICE_RESTART_CANCELLED_BEFORE_START means a queued exec never began.
 	ErrorCode  *string    `json:"error_code,omitempty"`
-	ExecId     *string    `json:"exec_id,omitempty"`
+	ExecId     string     `json:"exec_id"`
 	ExitCode   *int       `json:"exit_code,omitempty"`
 	FinishedAt *time.Time `json:"finished_at,omitempty"`
 
 	// LogsUrl SSE log stream URL for async exec.
-	LogsUrl   *string           `json:"logs_url,omitempty"`
-	SessionId *string           `json:"session_id,omitempty"`
-	StartedAt *time.Time        `json:"started_at,omitempty"`
-	Status    *ExecRecordStatus `json:"status,omitempty"`
+	LogsUrl *string `json:"logs_url,omitempty"`
+
+	// OperationId Stable caller identity for lookup after a lost submission response.
+	OperationId string     `json:"operation_id"`
+	SessionId   string     `json:"session_id"`
+	StartedAt   *time.Time `json:"started_at,omitempty"`
+
+	// Status timed_out means the execution exceeded its execution deadline; interrupted means execution began but the service restarted before a result could be confirmed. Reconcile possible side effects before retrying either state.
+	Status ExecRecordStatus `json:"status"`
 
 	// Stderr Populated only for sync exec.
 	Stderr          *string `json:"stderr,omitempty"`
@@ -833,10 +1237,15 @@ type ExecRecord struct {
 	// Stdout Populated only for sync exec.
 	Stdout          *string `json:"stdout,omitempty"`
 	StdoutTruncated *bool   `json:"stdout_truncated,omitempty"`
-	WorkingDir      *string `json:"working_dir,omitempty"`
+
+	// StopConfirmed Physical stop was confirmed. Terminal status alone never establishes stopped state.
+	StopConfirmed *bool   `json:"stop_confirmed,omitempty"`
+	TenantId      *string `json:"tenant_id,omitempty"`
+	UserId        *string `json:"user_id,omitempty"`
+	WorkingDir    *string `json:"working_dir,omitempty"`
 }
 
-// ExecRecordStatus defines model for ExecRecord.Status.
+// ExecRecordStatus timed_out means the execution exceeded its execution deadline; interrupted means execution began but the service restarted before a result could be confirmed. Reconcile possible side effects before retrying either state.
 type ExecRecordStatus string
 
 // ExecRecordList defines model for ExecRecordList.
@@ -851,9 +1260,18 @@ type ExecSessionRequest struct {
 	Code    *string   `json:"code,omitempty"`
 	Command *[]string `json:"command,omitempty"`
 
-	// Env Per-exec env overrides merged over session default_env.
+	// Env Environment variables are applied only to this execution and are never persisted or returned.
 	Env      *map[string]string          `json:"env,omitempty"`
 	Language *ExecSessionRequestLanguage `json:"language,omitempty"`
+
+	// OperationId Caller operation identity, deduplicated per principal and session. Reuse after an ambiguous transport failure.
+	OperationId *string `json:"operation_id,omitempty"`
+
+	// OutputDirectory Optional fresh invocation output directory; fixed management-owned ACL, never an arbitrary host path.
+	OutputDirectory *string `json:"output_directory,omitempty"`
+
+	// SubprocessPolicy deny requires explicit command and kernel seccomp enforcement; threads remain allowed.
+	SubprocessPolicy *ExecSessionRequestSubprocessPolicy `json:"subprocess_policy,omitempty"`
 
 	// TimeoutSeconds Exec timeout. Bounded by profile limit.
 	TimeoutSeconds *int `json:"timeout_seconds,omitempty"`
@@ -865,23 +1283,41 @@ type ExecSessionRequest struct {
 // ExecSessionRequestLanguage defines model for ExecSessionRequest.Language.
 type ExecSessionRequestLanguage string
 
+// ExecSessionRequestSubprocessPolicy deny requires explicit command and kernel seccomp enforcement; threads remain allowed.
+type ExecSessionRequestSubprocessPolicy string
+
 // ExecSessionResult Synchronous Session execution result. Output fields are bounded by profile max_log_bytes.
 type ExecSessionResult struct {
 	// Cwd Example: /workspace
-	Cwd             *string                       `json:"cwd,omitempty"`
-	Environment     *ExecSessionResultEnvironment `json:"environment,omitempty"`
-	ExitCode        *int                          `json:"exit_code,omitempty"`
-	SandboxId       *string                       `json:"sandbox_id,omitempty"`
-	SessionId       *string                       `json:"session_id,omitempty"`
-	Stderr          *string                       `json:"stderr,omitempty"`
-	StderrTruncated *bool                         `json:"stderr_truncated,omitempty"`
-	Stdout          *string                       `json:"stdout,omitempty"`
-	StdoutTruncated *bool                         `json:"stdout_truncated,omitempty"`
-	WorkspaceId     *string                       `json:"workspace_id,omitempty"`
+	Cwd *string `json:"cwd,omitempty"`
+
+	// EffectiveEnvironment Answers what was selected, why, and whether it was degraded. Never exposes image/runtime/host internals.
+	EffectiveEnvironment *EffectiveEnvironment         `json:"effective_environment,omitempty"`
+	Environment          *ExecSessionResultEnvironment `json:"environment,omitempty"`
+
+	// ErrorCode Machine-readable terminal error code, such as TIMEOUT or EXEC_CANCELLED.
+	ErrorCode *string `json:"error_code,omitempty"`
+
+	// ExecId Present for Session execution; empty for a direct sandbox execution without an ExecRecord.
+	ExecId    *string `json:"exec_id,omitempty"`
+	ExitCode  int     `json:"exit_code"`
+	SandboxId *string `json:"sandbox_id,omitempty"`
+	SessionId *string `json:"session_id,omitempty"`
+
+	// Status Execution status vocabulary shared with JobResult and ExecRecord; synchronous execution returns a terminal value.
+	Status          ExecSessionResultStatus `json:"status"`
+	Stderr          string                  `json:"stderr"`
+	StderrTruncated *bool                   `json:"stderr_truncated,omitempty"`
+	Stdout          string                  `json:"stdout"`
+	StdoutTruncated *bool                   `json:"stdout_truncated,omitempty"`
+	WorkspaceId     *string                 `json:"workspace_id,omitempty"`
 }
 
 // ExecSessionResultEnvironment defines model for ExecSessionResult.Environment.
 type ExecSessionResultEnvironment string
+
+// ExecSessionResultStatus Execution status vocabulary shared with JobResult and ExecRecord; synchronous execution returns a terminal value.
+type ExecSessionResultStatus string
 
 // ExecdCapabilities defines model for ExecdCapabilities.
 type ExecdCapabilities struct {
@@ -910,11 +1346,19 @@ type JobResult struct {
 
 	// EffectiveEnvironment Answers what was selected, why, and whether it was degraded. Never exposes image/runtime/host internals.
 	EffectiveEnvironment *EffectiveEnvironment `json:"effective_environment,omitempty"`
-	Error                *string               `json:"error,omitempty"`
-	ErrorCode            *string               `json:"error_code,omitempty"`
-	ExitCode             *int                  `json:"exit_code,omitempty"`
-	FinishedAt           *time.Time            `json:"finished_at,omitempty"`
-	JobId                *string               `json:"job_id,omitempty"`
+
+	// EffectivePolicy Server-resolved execution policy. Secret values are redacted.
+	EffectivePolicy *map[string]interface{} `json:"effective_policy,omitempty"`
+	Error           *string                 `json:"error,omitempty"`
+
+	// ErrorCode Machine-readable execution error. SERVICE_RESTART_INTERRUPTED means execution began but its result was not confirmed; SERVICE_RESTART_CANCELLED_BEFORE_START means the queued job never began. A persisted terminal QUOTA_EXCEEDED means this job was admitted but could not obtain runtime capacity; submit a new job with a new idempotency_key after capacity is available. Do not replay with the same key or automatically repeat the operation.
+	ErrorCode  *string    `json:"error_code,omitempty"`
+	ExitCode   *int       `json:"exit_code,omitempty"`
+	FinishedAt *time.Time `json:"finished_at,omitempty"`
+
+	// IdempotencyKey Echo of the caller-provided idempotency key; maximum 128 UTF-8 bytes.
+	IdempotencyKey *string `json:"idempotency_key,omitempty"`
+	JobId          *string `json:"job_id,omitempty"`
 
 	// LogsUrl SSE log stream URL; returned when ?wait expires while the job is still running.
 	LogsUrl         *string     `json:"logs_url,omitempty"`
@@ -922,32 +1366,97 @@ type JobResult struct {
 	OutputArtifacts *[]Artifact `json:"output_artifacts,omitempty"`
 	SandboxId       *string     `json:"sandbox_id,omitempty"`
 	StartedAt       *time.Time  `json:"started_at,omitempty"`
-	Status          *string     `json:"status,omitempty"`
-	Stderr          *string     `json:"stderr,omitempty"`
-	StderrTruncated *bool       `json:"stderr_truncated,omitempty"`
-	Stdout          *string     `json:"stdout,omitempty"`
-	StdoutTruncated *bool       `json:"stdout_truncated,omitempty"`
-	TaskType        *string     `json:"task_type,omitempty"`
-	TenantId        *string     `json:"tenant_id,omitempty"`
-	WorkspaceId     *string     `json:"workspace_id,omitempty"`
+
+	// Status interrupted means execution began but the service restarted before a result could be confirmed; reconcile possible side effects before retrying.
+	Status          *JobResultStatus `json:"status,omitempty"`
+	Stderr          *string          `json:"stderr,omitempty"`
+	StderrTruncated *bool            `json:"stderr_truncated,omitempty"`
+	Stdout          *string          `json:"stdout,omitempty"`
+	StdoutTruncated *bool            `json:"stdout_truncated,omitempty"`
+	TaskType        *string          `json:"task_type,omitempty"`
+	TenantId        *string          `json:"tenant_id,omitempty"`
+	WorkspaceId     *string          `json:"workspace_id,omitempty"`
 }
 
-// LeaseRequest Advanced API. The authenticated tenant and user are derived exclusively from the Bearer API key and cannot be supplied by the request body. Environment selection uses the same EnvironmentSelector as Public endpoints.
+// JobResultStatus interrupted means execution began but the service restarted before a result could be confirmed; reconcile possible side effects before retrying.
+type JobResultStatus string
+
+// LeaseRequest The authenticated tenant and user are derived exclusively from the Bearer API key. Environment selection uses the same EnvironmentSelector as other public endpoints.
 type LeaseRequest struct {
-	// Environment Unified environment selection. Field presence expresses intent: `profile` for explicit selection (fail-closed), `hints` for auto selection, both absent for the default profile. `profile` and `hints` are mutually exclusive (INVALID_SELECTOR when both present).
-	Environment   *EnvironmentSelector `json:"environment,omitempty"`
-	Metadata      *map[string]string   `json:"metadata,omitempty"`
-	PolicyRequest *PolicyRequest       `json:"policy_request,omitempty"`
+	// Environment Unified environment selection. `profile` means an explicit environment name chosen by the caller; `hints` means capability-based auto selection performed by the server; both absent means the default public profile. `profile` and `hints` are mutually exclusive (INVALID_SELECTOR when both present).
+	Environment *EnvironmentSelector `json:"environment,omitempty"`
+	Metadata    *map[string]string   `json:"metadata,omitempty"`
 
-	// ResolutionId Mutually exclusive with environment.
-	ResolutionId *string                `json:"resolution_id,omitempty"`
-	RiskLevel    *LeaseRequestRiskLevel `json:"risk_level,omitempty"`
-	Spec         *SandboxSpec           `json:"spec,omitempty"`
-	WorkspaceId  *string                `json:"workspace_id,omitempty"`
+	// ResolutionId Environment resolution ticket from /v1/environment:resolve. Reuses an already resolved immutable environment result. Mutually exclusive with environment.
+	ResolutionId *string `json:"resolution_id,omitempty"`
+	WorkspaceId  *string `json:"workspace_id,omitempty"`
 }
 
-// LeaseRequestRiskLevel defines model for LeaseRequest.RiskLevel.
-type LeaseRequestRiskLevel string
+// MaintenanceCall defines model for MaintenanceCall.
+type MaintenanceCall struct {
+	AuthorizedWorkWrite bool   `json:"authorized_work_write"`
+	CallId              string `json:"call_id"`
+
+	// Context 完整原上下文；所有身份字段为至多256个UTF-8字节的非空字符串，拒绝ASCII控制字符与Unicode行分隔符U+2028/U+2029。
+	Context     PlatformCallContext `json:"context"`
+	ExecutionId string              `json:"execution_id"`
+
+	// Gid 原输出根私有GID，不是负载主GID65532。
+	Gid             int64                        `json:"gid"`
+	LeaseRef        PlatformLeaseRef             `json:"lease_ref"`
+	OperationId     string                       `json:"operation_id"`
+	OutputDirectory string                       `json:"output_directory"`
+	RequestDigest   string                       `json:"request_digest"`
+	RootDevice      int64                        `json:"root_device"`
+	RootInode       int64                        `json:"root_inode"`
+	StopConfirmed   MaintenanceCallStopConfirmed `json:"stop_confirmed"`
+	Uid             int64                        `json:"uid"`
+}
+
+// MaintenanceCallStopConfirmed defines model for MaintenanceCall.StopConfirmed.
+type MaintenanceCallStopConfirmed bool
+
+// MaintenanceLeaf defines model for MaintenanceLeaf.
+type MaintenanceLeaf struct {
+	CallId    *string `json:"call_id"`
+	Device    int64   `json:"device"`
+	Directory bool    `json:"directory"`
+	Gid       int64   `json:"gid"`
+	Inode     int64   `json:"inode"`
+
+	// Mode POSIX权限值含sticky/setgid，排除文件类型位。
+	Mode int `json:"mode"`
+
+	// Path work/output完整相对路径，含两个公共根，不含宿主路径。
+	Path string `json:"path"`
+	Uid  int64  `json:"uid"`
+}
+
+// MaintenanceProofQuery defines model for MaintenanceProofQuery.
+type MaintenanceProofQuery struct {
+	// ClaimDigest 对不含claim_digest的完整请求作UTF-8规范JSON SHA256，绑定原来源与完整当前上下文。
+	ClaimDigest string `json:"claim_digest"`
+
+	// Context 完整原上下文；所有身份字段为至多256个UTF-8字节的非空字符串，拒绝ASCII控制字符与Unicode行分隔符U+2028/U+2029。
+	Context        PlatformCallContext `json:"context"`
+	OperationId    string              `json:"operation_id"`
+	SourceIdentity string              `json:"source_identity"`
+	WorkspaceId    string              `json:"workspace_id"`
+}
+
+// MaintenanceSourceProof 原源管理身份下真实FD枚举；未知原调用屏障或未停止调用明确拒绝。仅文件API历史允许空calls，但foreign叶必须关联唯一原UID登记。
+type MaintenanceSourceProof struct {
+	Calls       []MaintenanceCall `json:"calls"`
+	ClaimDigest string            `json:"claim_digest"`
+
+	// Context 完整原上下文；所有身份字段为至多256个UTF-8字节的非空字符串，拒绝ASCII控制字符与Unicode行分隔符U+2028/U+2029。
+	Context        PlatformCallContext `json:"context"`
+	Leaves         []MaintenanceLeaf   `json:"leaves"`
+	OperationId    string              `json:"operation_id"`
+	RootDevice     int64               `json:"root_device"`
+	RootInode      int64               `json:"root_inode"`
+	SourceIdentity string              `json:"source_identity"`
+}
 
 // NetworkPolicy defines model for NetworkPolicy.
 type NetworkPolicy struct {
@@ -957,6 +1466,32 @@ type NetworkPolicy struct {
 
 // NetworkPolicyMode defines model for NetworkPolicy.Mode.
 type NetworkPolicyMode string
+
+// PlatformCallContext 完整原上下文；所有身份字段为至多256个UTF-8字节的非空字符串，拒绝ASCII控制字符与Unicode行分隔符U+2028/U+2029。
+type PlatformCallContext struct {
+	AttemptId          *string                        `json:"attempt_id"`
+	AuthorizationScope string                         `json:"authorization_scope"`
+	DecisionReference  *string                        `json:"decision_reference"`
+	ExecutionId        *string                        `json:"execution_id"`
+	InvocationId       *string                        `json:"invocation_id"`
+	RunId              string                         `json:"run_id"`
+	SubjectKind        PlatformCallContextSubjectKind `json:"subject_kind"`
+	TenantId           string                         `json:"tenant_id"`
+	TraceId            string                         `json:"trace_id"`
+	UserId             string                         `json:"user_id"`
+}
+
+// PlatformCallContextSubjectKind defines model for PlatformCallContext.SubjectKind.
+type PlatformCallContextSubjectKind string
+
+// PlatformLeaseRef defines model for PlatformLeaseRef.
+type PlatformLeaseRef struct {
+	ExpiresAt  time.Time            `json:"expires_at"`
+	Generation int64                `json:"generation"`
+	LeaseId    string               `json:"lease_id"`
+	ProviderId string               `json:"provider_id"`
+	Workspace  PlatformWorkspaceRef `json:"workspace"`
+}
 
 // PlatformSpec defines model for PlatformSpec.
 type PlatformSpec struct {
@@ -968,6 +1503,15 @@ type PlatformSpec struct {
 
 	// Variant Example: v8
 	Variant *string `json:"variant,omitempty"`
+}
+
+// PlatformWorkspaceRef defines model for PlatformWorkspaceRef.
+type PlatformWorkspaceRef struct {
+	Generation   int64  `json:"generation"`
+	ProviderId   string `json:"provider_id"`
+	ResourceId   string `json:"resource_id"`
+	Scope        string `json:"scope"`
+	WorkspaceKey string `json:"workspace_key"`
 }
 
 // PolicyRequest defines model for PolicyRequest.
@@ -1014,8 +1558,11 @@ type RenewRequest struct {
 
 // ResolveEnvironmentRequest defines model for ResolveEnvironmentRequest.
 type ResolveEnvironmentRequest struct {
-	// Environment Unified environment selection. Field presence expresses intent: `profile` for explicit selection (fail-closed), `hints` for auto selection, both absent for the default profile. `profile` and `hints` are mutually exclusive (INVALID_SELECTOR when both present).
+	// Environment Unified environment selection. `profile` means an explicit environment name chosen by the caller; `hints` means capability-based auto selection performed by the server; both absent means the default public profile. `profile` and `hints` are mutually exclusive (INVALID_SELECTOR when both present).
 	Environment EnvironmentSelector `json:"environment"`
+
+	// IncludeFacts Request actual authenticated profile attestation; unavailable enforcement fails closed.
+	IncludeFacts *bool `json:"include_facts,omitempty"`
 
 	// TtlSeconds Requested ticket TTL; bounded by server config (default 30 minutes).
 	TtlSeconds *int `json:"ttl_seconds,omitempty"`
@@ -1026,7 +1573,16 @@ type ResourceLimits struct {
 	Cpus     *float64 `json:"cpus,omitempty"`
 	DiskMb   *int     `json:"disk_mb,omitempty"`
 	MemoryMb *int     `json:"memory_mb,omitempty"`
-	Pids     *int     `json:"pids,omitempty"`
+
+	// MemoryReservationMb Server-managed soft limit (cgroup memory.soft_limit_in_bytes) also used for quota accounting; equals memory_mb unless the profile overrides it. Client-supplied values are rejected.
+	MemoryReservationMb *int `json:"memory_reservation_mb,omitempty"`
+
+	// MemorySwapMb Server-managed total memory+swap budget in MB; 0/absent disables swap for the container. Client-supplied values are rejected.
+	MemorySwapMb *int `json:"memory_swap_mb,omitempty"`
+	Pids         *int `json:"pids,omitempty"`
+
+	// TempMb Fixed profile temp partition; disk_mb includes main and temporary mounts.
+	TempMb *int `json:"temp_mb,omitempty"`
 }
 
 // RuntimeCapabilities defines model for RuntimeCapabilities.
@@ -1075,7 +1631,10 @@ type SandboxLease struct {
 	SandboxId       *string `json:"sandbox_id,omitempty"`
 	Status          *string `json:"status,omitempty"`
 	TenantId        *string `json:"tenant_id,omitempty"`
-	WorkspaceId     *string `json:"workspace_id,omitempty"`
+
+	// UserId Authenticated owner; cannot be supplied or changed by the caller.
+	UserId      *string `json:"user_id,omitempty"`
+	WorkspaceId *string `json:"workspace_id,omitempty"`
 }
 
 // SandboxSpec defines model for SandboxSpec.
@@ -1106,24 +1665,69 @@ type Session struct {
 	// EffectiveEnvironment Answers what was selected, why, and whether it was degraded. Never exposes image/runtime/host internals.
 	EffectiveEnvironment *EffectiveEnvironment `json:"effective_environment,omitempty"`
 	ExpiresAt            *time.Time            `json:"expires_at,omitempty"`
-	Metadata             *map[string]string    `json:"metadata,omitempty"`
-	ProfileRevision      *string               `json:"profile_revision,omitempty"`
-	ResourceVersion      *int64                `json:"resource_version,omitempty"`
-	RuntimeProfile       *string               `json:"runtime_profile,omitempty"`
-	SessionId            *string               `json:"session_id,omitempty"`
-	StatePolicy          *string               `json:"state_policy,omitempty"`
-	Status               *string               `json:"status,omitempty"`
-	TenantId             *string               `json:"tenant_id,omitempty"`
-	UserId               *string               `json:"user_id,omitempty"`
-	WorkspaceId          *string               `json:"workspace_id,omitempty"`
+
+	// IdempotencyKey Echo of the caller-provided creation idempotency key; maximum 128 UTF-8 bytes.
+	IdempotencyKey  *string            `json:"idempotency_key,omitempty"`
+	Metadata        *map[string]string `json:"metadata,omitempty"`
+	ProfileRevision *string            `json:"profile_revision,omitempty"`
+	ResourceVersion *int64             `json:"resource_version,omitempty"`
+	RuntimeProfile  *string            `json:"runtime_profile,omitempty"`
+	SessionId       *string            `json:"session_id,omitempty"`
+	StatePolicy     *string            `json:"state_policy,omitempty"`
+	Status          *string            `json:"status,omitempty"`
+	TenantId        *string            `json:"tenant_id,omitempty"`
+	UserId          *string            `json:"user_id,omitempty"`
+	WorkspaceId     *string            `json:"workspace_id,omitempty"`
 }
 
-// SessionContext Session execution context. cwd must be under /workspace.
+// SessionContext Persistent Session context contains only cwd, which must be under /workspace.
 type SessionContext struct {
 	// Cwd Example: /workspace
-	Cwd *string            `json:"cwd,omitempty"`
-	Env *map[string]string `json:"env,omitempty"`
+	Cwd *string `json:"cwd,omitempty"`
 }
+
+// SessionOwnership defines model for SessionOwnership.
+type SessionOwnership struct {
+	PrincipalId     string `json:"principal_id"`
+	ProfileRevision string `json:"profile_revision"`
+	SessionId       string `json:"session_id"`
+	TenantId        string `json:"tenant_id"`
+	UserId          string `json:"user_id"`
+	WorkspaceId     string `json:"workspace_id"`
+}
+
+// SharedStorageResource defines model for SharedStorageResource.
+type SharedStorageResource struct {
+	BindingVersion    int  `json:"binding_version"`
+	BudgetBytes       int  `json:"budget_bytes"`
+	HardQuota         bool `json:"hard_quota"`
+	HardQuotaVerified bool `json:"hard_quota_verified"`
+	Identity          *struct {
+		BackingDeviceId int                                     `json:"backing_device_id"`
+		BackingInode    int                                     `json:"backing_inode"`
+		CapacityBytes   int                                     `json:"capacity_bytes"`
+		DeviceId        int                                     `json:"device_id"`
+		Filesystem      SharedStorageResourceIdentityFilesystem `json:"filesystem"`
+		FilesystemUuid  openapi_types.UUID                      `json:"filesystem_uuid"`
+		InodeCapacity   int                                     `json:"inode_capacity"`
+		RootInode       int                                     `json:"root_inode"`
+		SourceIdentity  string                                  `json:"source_identity"`
+	} `json:"identity,omitempty"`
+	OwnerRunId       string `json:"owner_run_id"`
+	OwnerTenantId    string `json:"owner_tenant_id"`
+	OwnerUserId      string `json:"owner_user_id"`
+	Persistent       bool   `json:"persistent"`
+	ProvisionerId    string `json:"provisioner_id"`
+	QuotaMb          int    `json:"quota_mb"`
+	ResourceId       string `json:"resource_id"`
+	SharedAttachment bool   `json:"shared_attachment"`
+	SourceIdentity   string `json:"source_identity"`
+	StorageRef       string `json:"storage_ref"`
+	WorkspaceId      string `json:"workspace_id"`
+}
+
+// SharedStorageResourceIdentityFilesystem defines model for SharedStorageResource.Identity.Filesystem.
+type SharedStorageResourceIdentityFilesystem string
 
 // StartGUIRequest defines model for StartGUIRequest.
 type StartGUIRequest struct {
@@ -1148,11 +1752,15 @@ type SubmitJobRequest struct {
 	// Env Merged over profile env baseline; server may redact or reject sensitive keys.
 	Env *map[string]string `json:"env,omitempty"`
 
-	// Environment Unified environment selection. Field presence expresses intent: `profile` for explicit selection (fail-closed), `hints` for auto selection, both absent for the default profile. `profile` and `hints` are mutually exclusive (INVALID_SELECTOR when both present).
-	Environment      *EnvironmentSelector      `json:"environment,omitempty"`
-	IdempotencyKey   *string                   `json:"idempotency_key,omitempty"`
-	InputArtifactIds *[]string                 `json:"input_artifact_ids,omitempty"`
-	Language         *SubmitJobRequestLanguage `json:"language,omitempty"`
+	// Environment Unified environment selection. `profile` means an explicit environment name chosen by the caller; `hints` means capability-based auto selection performed by the server; both absent means the default public profile. `profile` and `hints` are mutually exclusive (INVALID_SELECTOR when both present).
+	Environment *EnvironmentSelector `json:"environment,omitempty"`
+
+	// IdempotencyKey Maximum 128 UTF-8 bytes.
+	IdempotencyKey   *string   `json:"idempotency_key,omitempty"`
+	InputArtifactIds *[]string `json:"input_artifact_ids,omitempty"`
+
+	// Language Code execution language. Only used with `code`; shell or binary commands should use `command`.
+	Language *SubmitJobRequestLanguage `json:"language,omitempty"`
 
 	// Metadata Opaque metadata for audit. Convention: metadata["client.trace_ref"] carries the caller trace reference.
 	Metadata *map[string]string `json:"metadata,omitempty"`
@@ -1160,7 +1768,7 @@ type SubmitJobRequest struct {
 	// QueueWaitTimeoutSeconds Admission queue wait; unrelated to ?wait which bounds waiting for the result.
 	QueueWaitTimeoutSeconds *int `json:"queue_wait_timeout_seconds,omitempty"`
 
-	// ResolutionId Mutually exclusive with environment.
+	// ResolutionId Environment resolution ticket from /v1/environment:resolve. Reuses an already resolved immutable environment result. Mutually exclusive with environment.
 	ResolutionId *string `json:"resolution_id,omitempty"`
 	SessionId    *string `json:"session_id,omitempty"`
 
@@ -1169,8 +1777,37 @@ type SubmitJobRequest struct {
 	WorkspaceId    *string `json:"workspace_id,omitempty"`
 }
 
-// SubmitJobRequestLanguage defines model for SubmitJobRequest.Language.
+// SubmitJobRequestLanguage Code execution language. Only used with `code`; shell or binary commands should use `command`.
 type SubmitJobRequestLanguage string
+
+// TrustedExecutionGovernance 可信 Platform 运行层提供原调用与策略身份，不接受模型伪造，不携带宿主路径；完整原分配事实必须在命令副作用前持久登记。
+type TrustedExecutionGovernance struct {
+	// AuthorizedWorkWrite 未具备逐调用只读work内核机制，false在副作用前拒绝。
+	AuthorizedWorkWrite TrustedExecutionGovernanceAuthorizedWorkWrite `json:"authorized_work_write"`
+	Context             struct {
+		AttemptId          string                                       `json:"attempt_id"`
+		AuthorizationScope string                                       `json:"authorization_scope"`
+		DecisionReference  *string                                      `json:"decision_reference"`
+		ExecutionId        string                                       `json:"execution_id"`
+		InvocationId       string                                       `json:"invocation_id"`
+		RunId              string                                       `json:"run_id"`
+		SubjectKind        TrustedExecutionGovernanceContextSubjectKind `json:"subject_kind"`
+		TenantId           string                                       `json:"tenant_id"`
+		TraceId            string                                       `json:"trace_id"`
+		UserId             string                                       `json:"user_id"`
+	} `json:"context"`
+	LeaseRef            PlatformLeaseRef `json:"lease_ref"`
+	PlatformOperationId string           `json:"platform_operation_id"`
+	RequestDigest       string           `json:"request_digest"`
+	SourceIdentity      string           `json:"source_identity"`
+	WorkspaceId         string           `json:"workspace_id"`
+}
+
+// TrustedExecutionGovernanceAuthorizedWorkWrite 未具备逐调用只读work内核机制，false在副作用前拒绝。
+type TrustedExecutionGovernanceAuthorizedWorkWrite bool
+
+// TrustedExecutionGovernanceContextSubjectKind defines model for TrustedExecutionGovernance.Context.SubjectKind.
+type TrustedExecutionGovernanceContextSubjectKind string
 
 // ViewerDescriptor defines model for ViewerDescriptor.
 type ViewerDescriptor struct {
@@ -1209,27 +1846,55 @@ type ViewerPolicy struct {
 
 // Workspace defines model for Workspace.
 type Workspace struct {
-	CreatedAt     *time.Time              `json:"created_at,omitempty"`
-	ExpiresAt     *time.Time              `json:"expires_at,omitempty"`
-	Metadata      *map[string]string      `json:"metadata,omitempty"`
-	QuotaMb       *int                    `json:"quota_mb,omitempty"`
-	RetentionMode *WorkspaceRetentionMode `json:"retention_mode,omitempty"`
-	TenantId      *string                 `json:"tenant_id,omitempty"`
-	UserId        *string                 `json:"user_id,omitempty"`
-	WorkspaceId   *string                 `json:"workspace_id,omitempty"`
+	CreatedAt *time.Time `json:"created_at,omitempty"`
+	ExpiresAt *time.Time `json:"expires_at,omitempty"`
+
+	// LifecycleRevision Current storage lifecycle control revision; zero before first control.
+	LifecycleRevision *int64                  `json:"lifecycle_revision,omitempty"`
+	Metadata          *map[string]string      `json:"metadata,omitempty"`
+	QuotaMb           *int                    `json:"quota_mb,omitempty"`
+	RetentionMode     *WorkspaceRetentionMode `json:"retention_mode,omitempty"`
+	TenantId          *string                 `json:"tenant_id,omitempty"`
+	UserId            *string                 `json:"user_id,omitempty"`
+	WorkspaceId       *string                 `json:"workspace_id,omitempty"`
 }
 
 // WorkspaceRetentionMode defines model for Workspace.RetentionMode.
 type WorkspaceRetentionMode string
 
+// WorkspaceBindingRequest defines model for WorkspaceBindingRequest.
+type WorkspaceBindingRequest struct {
+	union json.RawMessage
+}
+
+// WorkspaceBindingRequest0 defines model for WorkspaceBindingRequest.0.
+type WorkspaceBindingRequest0 struct {
+	Mode WorkspaceBindingRequest0Mode `json:"mode"`
+}
+
+// WorkspaceBindingRequest0Mode defines model for WorkspaceBindingRequest.0.Mode.
+type WorkspaceBindingRequest0Mode string
+
+// WorkspaceBindingRequest1 defines model for WorkspaceBindingRequest.1.
+type WorkspaceBindingRequest1 struct {
+	BindingVersion int                          `json:"binding_version"`
+	Mode           WorkspaceBindingRequest1Mode `json:"mode"`
+	ResourceId     string                       `json:"resource_id"`
+	StorageRef     string                       `json:"storage_ref"`
+}
+
+// WorkspaceBindingRequest1Mode defines model for WorkspaceBindingRequest.1.Mode.
+type WorkspaceBindingRequest1Mode string
+
 // WorkspaceFileInfo defines model for WorkspaceFileInfo.
 type WorkspaceFileInfo struct {
 	Environment *WorkspaceFileInfoEnvironment `json:"environment,omitempty"`
-	Kind        *WorkspaceFileInfoKind        `json:"kind,omitempty"`
+	Executable  bool                          `json:"executable"`
+	Kind        WorkspaceFileInfoKind         `json:"kind"`
 	Mime        *string                       `json:"mime,omitempty"`
 	ModTime     *time.Time                    `json:"mod_time,omitempty"`
 	Name        *string                       `json:"name,omitempty"`
-	Path        *string                       `json:"path,omitempty"`
+	Path        string                        `json:"path"`
 	SandboxPath *string                       `json:"sandbox_path,omitempty"`
 	Sha256      *string                       `json:"sha256,omitempty"`
 	Size        *int64                        `json:"size,omitempty"`
@@ -1241,13 +1906,117 @@ type WorkspaceFileInfoEnvironment string
 // WorkspaceFileInfoKind defines model for WorkspaceFileInfo.Kind.
 type WorkspaceFileInfoKind string
 
+// WorkspaceLifecycleLookup defines model for WorkspaceLifecycleLookup.
+type WorkspaceLifecycleLookup struct {
+	Receipt *WorkspaceLifecycleReceipt    `json:"receipt"`
+	State   WorkspaceLifecycleLookupState `json:"state"`
+}
+
+// WorkspaceLifecycleLookupState defines model for WorkspaceLifecycleLookup.State.
+type WorkspaceLifecycleLookupState string
+
+// WorkspaceLifecycleReceipt defines model for WorkspaceLifecycleReceipt.
+type WorkspaceLifecycleReceipt struct {
+	// Deadline UTC deadline with at most microsecond precision.
+	Deadline      time.Time                      `json:"deadline"`
+	OperationId   string                         `json:"operation_id"`
+	RequestDigest string                         `json:"request_digest"`
+	Revision      int64                          `json:"revision"`
+	State         WorkspaceLifecycleReceiptState `json:"state"`
+	TerminalAt    *time.Time                     `json:"terminal_at,omitempty"`
+	WorkspaceId   string                         `json:"workspace_id"`
+}
+
+// WorkspaceLifecycleReceiptState defines model for WorkspaceLifecycleReceipt.State.
+type WorkspaceLifecycleReceiptState string
+
+// WorkspaceLifecycleRequest defines model for WorkspaceLifecycleRequest.
+type WorkspaceLifecycleRequest struct {
+	ExpectedRevision int64 `json:"expected_revision"`
+
+	// HoldSeconds Active or paused only. Zero selects a one-hour hold.
+	HoldSeconds *int   `json:"hold_seconds,omitempty"`
+	OperationId string `json:"operation_id"`
+
+	// RetentionSeconds Positive and required for terminal only.
+	RetentionSeconds *int                           `json:"retention_seconds,omitempty"`
+	State            WorkspaceLifecycleRequestState `json:"state"`
+
+	// TerminalAt Authoritative parent terminal time. Required for terminal only.
+	TerminalAt *time.Time `json:"terminal_at,omitempty"`
+}
+
+// WorkspaceLifecycleRequestState defines model for WorkspaceLifecycleRequest.State.
+type WorkspaceLifecycleRequestState string
+
 // WorkspaceListResult defines model for WorkspaceListResult.
 type WorkspaceListResult struct {
 	Entries   *[]WorkspaceFileInfo `json:"entries,omitempty"`
 	Limit     *int                 `json:"limit,omitempty"`
+	Offset    *int                 `json:"offset,omitempty"`
 	Path      *string              `json:"path,omitempty"`
 	Truncated *bool                `json:"truncated,omitempty"`
 }
+
+// WorkspacePreparationReceipt defines model for WorkspacePreparationReceipt.
+type WorkspacePreparationReceipt struct {
+	Facts           *WorkspaceViewFacts               `json:"facts,omitempty"`
+	OperationId     string                            `json:"operation_id"`
+	PrincipalId     string                            `json:"principal_id"`
+	ProfileRevision string                            `json:"profile_revision"`
+	RequestDigest   string                            `json:"request_digest"`
+	SandboxId       string                            `json:"sandbox_id"`
+	SessionId       string                            `json:"session_id"`
+	Status          WorkspacePreparationReceiptStatus `json:"status"`
+	TenantId        string                            `json:"tenant_id"`
+	UserId          string                            `json:"user_id"`
+	WorkspaceId     string                            `json:"workspace_id"`
+}
+
+// WorkspacePreparationReceiptStatus defines model for WorkspacePreparationReceipt.Status.
+type WorkspacePreparationReceiptStatus string
+
+// WorkspacePreparationRequest defines model for WorkspacePreparationRequest.
+type WorkspacePreparationRequest struct {
+	OperationId   string `json:"operation_id"`
+	RequestDigest string `json:"request_digest"`
+}
+
+// WorkspacePurgeReceipt defines model for WorkspacePurgeReceipt.
+type WorkspacePurgeReceipt struct {
+	OperationId     string                      `json:"operation_id"`
+	PrincipalId     string                      `json:"principal_id"`
+	ProfileRevision string                      `json:"profile_revision"`
+	RequestDigest   string                      `json:"request_digest"`
+	SessionId       string                      `json:"session_id"`
+	Status          WorkspacePurgeReceiptStatus `json:"status"`
+	TenantId        string                      `json:"tenant_id"`
+	UserId          string                      `json:"user_id"`
+	WorkspaceId     string                      `json:"workspace_id"`
+}
+
+// WorkspacePurgeReceiptStatus defines model for WorkspacePurgeReceipt.Status.
+type WorkspacePurgeReceiptStatus string
+
+// WorkspaceViewFacts defines model for WorkspaceViewFacts.
+type WorkspaceViewFacts struct {
+	Arch               string                      `json:"arch"`
+	ImageDigest        string                      `json:"image_digest"`
+	Mechanisms         []string                    `json:"mechanisms"`
+	NetworkMode        string                      `json:"network_mode"`
+	Os                 string                      `json:"os"`
+	ProfileRevision    *string                     `json:"profile_revision,omitempty"`
+	ReadonlyRegions    *[]string                   `json:"readonly_regions,omitempty"`
+	ResourceLimits     map[string]int64            `json:"resource_limits"`
+	RuntimeExecutables map[string]string           `json:"runtime_executables"`
+	RuntimeVersions    map[string]string           `json:"runtime_versions"`
+	SessionId          *string                     `json:"session_id,omitempty"`
+	ViewState          WorkspaceViewFactsViewState `json:"view_state"`
+	WorkspaceId        *string                     `json:"workspace_id,omitempty"`
+}
+
+// WorkspaceViewFactsViewState defines model for WorkspaceViewFacts.ViewState.
+type WorkspaceViewFactsViewState string
 
 // ID defines model for ID.
 type ID = string
@@ -1348,10 +2117,18 @@ type StreamExecLogsParams struct {
 	LastEventID *string `json:"Last-Event-ID,omitempty"`
 }
 
+// LookupExecByOperationParams defines parameters for LookupExecByOperation.
+type LookupExecByOperationParams struct {
+	OperationId string `form:"operation_id" json:"operation_id"`
+}
+
 // RemoveSessionFileParams defines parameters for RemoveSessionFile.
 type RemoveSessionFileParams struct {
 	Path      string `form:"path" json:"path"`
 	Recursive *bool  `form:"recursive,omitempty" json:"recursive,omitempty"`
+
+	// IfMatch Exact content hash for atomic conditional deletion.
+	IfMatch *string `json:"If-Match,omitempty"`
 }
 
 // DownloadSessionFileParams defines parameters for DownloadSessionFile.
@@ -1373,11 +2150,24 @@ type UploadSessionFileParams struct {
 // UploadSessionFileParamsIfNoneMatch defines parameters for UploadSessionFile.
 type UploadSessionFileParamsIfNoneMatch string
 
+// SetSessionFileExecutableJSONBody defines parameters for SetSessionFileExecutable.
+type SetSessionFileExecutableJSONBody struct {
+	Executable         bool  `json:"executable"`
+	ExpectedExecutable *bool `json:"expected_executable,omitempty"`
+}
+
+// SetSessionFileExecutableParams defines parameters for SetSessionFileExecutable.
+type SetSessionFileExecutableParams struct {
+	Path    string  `form:"path" json:"path"`
+	IfMatch *string `json:"If-Match,omitempty"`
+}
+
 // ListSessionFilesParams defines parameters for ListSessionFiles.
 type ListSessionFilesParams struct {
 	Path      *string `form:"path,omitempty" json:"path,omitempty"`
 	Recursive *bool   `form:"recursive,omitempty" json:"recursive,omitempty"`
 	Limit     *int    `form:"limit,omitempty" json:"limit,omitempty"`
+	Offset    *int    `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
 // StatSessionFileParams defines parameters for StatSessionFile.
@@ -1385,10 +2175,48 @@ type StatSessionFileParams struct {
 	Path *string `form:"path,omitempty" json:"path,omitempty"`
 }
 
+// PrepareOrSealWorkspaceViewParams defines parameters for PrepareOrSealWorkspaceView.
+type PrepareOrSealWorkspaceViewParams struct {
+	Action PrepareOrSealWorkspaceViewParamsAction `form:"action" json:"action"`
+}
+
+// PrepareOrSealWorkspaceViewParamsAction defines parameters for PrepareOrSealWorkspaceView.
+type PrepareOrSealWorkspaceViewParamsAction string
+
+// PrepareOrSealWorkspaceView200JSONResponseBody defines parameters for PrepareOrSealWorkspaceView.
+type PrepareOrSealWorkspaceView200JSONResponseBody struct {
+	union json.RawMessage
+}
+
+// LookupWorkspacePreparationParams defines parameters for LookupWorkspacePreparation.
+type LookupWorkspacePreparationParams struct {
+	RequestDigest string `form:"request_digest" json:"request_digest"`
+}
+
+// LookupWorkspacePurgeParams defines parameters for LookupWorkspacePurge.
+type LookupWorkspacePurgeParams struct {
+	RequestDigest string `form:"request_digest" json:"request_digest"`
+}
+
 // SuspendSessionParams defines parameters for SuspendSession.
 type SuspendSessionParams struct {
 	// Force When true, cancel all running execs before suspending.
 	Force *bool `form:"force,omitempty" json:"force,omitempty"`
+}
+
+// LookupSessionByOperationParams defines parameters for LookupSessionByOperation.
+type LookupSessionByOperationParams struct {
+	IdempotencyKey string `form:"idempotency_key" json:"idempotency_key"`
+}
+
+// LookupWorkspaceLifecycleParams defines parameters for LookupWorkspaceLifecycle.
+type LookupWorkspaceLifecycleParams struct {
+	OperationId string `form:"operation_id" json:"operation_id"`
+}
+
+// LookupStoragePurgeParams defines parameters for LookupStoragePurge.
+type LookupStoragePurgeParams struct {
+	RequestDigest string `form:"request_digest" json:"request_digest"`
 }
 
 // BuildDependenciesJSONRequestBody defines body for BuildDependencies for application/json ContentType.
@@ -1427,11 +2255,26 @@ type ExecSessionJSONRequestBody = ExecSessionRequest
 // ExecSessionAsyncJSONRequestBody defines body for ExecSessionAsync for application/json ContentType.
 type ExecSessionAsyncJSONRequestBody = AsyncExecRequest
 
+// SetSessionFileExecutableJSONRequestBody defines body for SetSessionFileExecutable for application/json ContentType.
+type SetSessionFileExecutableJSONRequestBody SetSessionFileExecutableJSONBody
+
+// PrepareOrSealWorkspaceViewJSONRequestBody defines body for PrepareOrSealWorkspaceView for application/json ContentType.
+type PrepareOrSealWorkspaceViewJSONRequestBody = WorkspacePreparationRequest
+
+// PurgeSessionWorkspaceJSONRequestBody defines body for PurgeSessionWorkspace for application/json ContentType.
+type PurgeSessionWorkspaceJSONRequestBody = WorkspacePreparationRequest
+
 // RenewSessionJSONRequestBody defines body for RenewSession for application/json ContentType.
 type RenewSessionJSONRequestBody = RenewRequest
 
 // PostV1WorkspacesJSONRequestBody defines body for PostV1Workspaces for application/json ContentType.
 type PostV1WorkspacesJSONRequestBody = CreateWorkspaceRequest
+
+// ControlWorkspaceLifecycleJSONRequestBody defines body for ControlWorkspaceLifecycle for application/json ContentType.
+type ControlWorkspaceLifecycleJSONRequestBody = WorkspaceLifecycleRequest
+
+// QueryWorkspaceMaintenanceProofJSONRequestBody defines body for QueryWorkspaceMaintenanceProof for application/json ContentType.
+type QueryWorkspaceMaintenanceProofJSONRequestBody = MaintenanceProofQuery
 
 // Getter for additional properties for ErrorResponse_Details. Returns the specified
 // element and whether it was found
@@ -1466,6 +2309,14 @@ func (a *ErrorResponse_Details) UnmarshalJSON(b []byte) error {
 		delete(object, "field")
 	}
 
+	if raw, found := object["reason"]; found {
+		err = json.Unmarshal(raw, &a.Reason)
+		if err != nil {
+			return fmt.Errorf("error reading 'reason': %w", err)
+		}
+		delete(object, "reason")
+	}
+
 	if raw, found := object["resource_type"]; found {
 		err = json.Unmarshal(raw, &a.ResourceType)
 		if err != nil {
@@ -1488,6 +2339,30 @@ func (a *ErrorResponse_Details) UnmarshalJSON(b []byte) error {
 			return fmt.Errorf("error reading 'retryable': %w", err)
 		}
 		delete(object, "retryable")
+	}
+
+	if raw, found := object["unavailable_candidate_count"]; found {
+		err = json.Unmarshal(raw, &a.UnavailableCandidateCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'unavailable_candidate_count': %w", err)
+		}
+		delete(object, "unavailable_candidate_count")
+	}
+
+	if raw, found := object["unknown_capabilities"]; found {
+		err = json.Unmarshal(raw, &a.UnknownCapabilities)
+		if err != nil {
+			return fmt.Errorf("error reading 'unknown_capabilities': %w", err)
+		}
+		delete(object, "unknown_capabilities")
+	}
+
+	if raw, found := object["unmet_capabilities"]; found {
+		err = json.Unmarshal(raw, &a.UnmetCapabilities)
+		if err != nil {
+			return fmt.Errorf("error reading 'unmet_capabilities': %w", err)
+		}
+		delete(object, "unmet_capabilities")
 	}
 
 	if len(object) != 0 {
@@ -1516,6 +2391,13 @@ func (a ErrorResponse_Details) MarshalJSON() ([]byte, error) {
 		}
 	}
 
+	if a.Reason != nil {
+		object["reason"], err = json.Marshal(a.Reason)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'reason': %w", err)
+		}
+	}
+
 	if a.ResourceType != nil {
 		object["resource_type"], err = json.Marshal(a.ResourceType)
 		if err != nil {
@@ -1533,6 +2415,27 @@ func (a ErrorResponse_Details) MarshalJSON() ([]byte, error) {
 	object["retryable"], err = json.Marshal(a.Retryable)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'retryable': %w", err)
+	}
+
+	if a.UnavailableCandidateCount != nil {
+		object["unavailable_candidate_count"], err = json.Marshal(a.UnavailableCandidateCount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'unavailable_candidate_count': %w", err)
+		}
+	}
+
+	if a.UnknownCapabilities != nil {
+		object["unknown_capabilities"], err = json.Marshal(a.UnknownCapabilities)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'unknown_capabilities': %w", err)
+		}
+	}
+
+	if a.UnmetCapabilities != nil {
+		object["unmet_capabilities"], err = json.Marshal(a.UnmetCapabilities)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'unmet_capabilities': %w", err)
+		}
 	}
 
 	for fieldName, field := range a.AdditionalProperties {
@@ -1707,5 +2610,129 @@ func (t *BuildDependencyRequest) UnmarshalJSON(b []byte) error {
 		}
 	}
 
+	return err
+}
+
+// AsWorkspaceBindingRequest0 returns the union data inside the WorkspaceBindingRequest as a WorkspaceBindingRequest0
+func (t WorkspaceBindingRequest) AsWorkspaceBindingRequest0() (WorkspaceBindingRequest0, error) {
+	var body WorkspaceBindingRequest0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromWorkspaceBindingRequest0 overwrites any union data inside the WorkspaceBindingRequest as the provided WorkspaceBindingRequest0
+func (t *WorkspaceBindingRequest) FromWorkspaceBindingRequest0(v WorkspaceBindingRequest0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeWorkspaceBindingRequest0 performs a merge with any union data inside the WorkspaceBindingRequest, using the provided WorkspaceBindingRequest0
+func (t *WorkspaceBindingRequest) MergeWorkspaceBindingRequest0(v WorkspaceBindingRequest0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsWorkspaceBindingRequest1 returns the union data inside the WorkspaceBindingRequest as a WorkspaceBindingRequest1
+func (t WorkspaceBindingRequest) AsWorkspaceBindingRequest1() (WorkspaceBindingRequest1, error) {
+	var body WorkspaceBindingRequest1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromWorkspaceBindingRequest1 overwrites any union data inside the WorkspaceBindingRequest as the provided WorkspaceBindingRequest1
+func (t *WorkspaceBindingRequest) FromWorkspaceBindingRequest1(v WorkspaceBindingRequest1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeWorkspaceBindingRequest1 performs a merge with any union data inside the WorkspaceBindingRequest, using the provided WorkspaceBindingRequest1
+func (t *WorkspaceBindingRequest) MergeWorkspaceBindingRequest1(v WorkspaceBindingRequest1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t WorkspaceBindingRequest) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *WorkspaceBindingRequest) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsWorkspacePreparationReceipt returns the union data inside the PrepareOrSealWorkspaceView200JSONResponseBody as a WorkspacePreparationReceipt
+func (t PrepareOrSealWorkspaceView200JSONResponseBody) AsWorkspacePreparationReceipt() (WorkspacePreparationReceipt, error) {
+	var body WorkspacePreparationReceipt
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromWorkspacePreparationReceipt overwrites any union data inside the PrepareOrSealWorkspaceView200JSONResponseBody as the provided WorkspacePreparationReceipt
+func (t *PrepareOrSealWorkspaceView200JSONResponseBody) FromWorkspacePreparationReceipt(v WorkspacePreparationReceipt) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeWorkspacePreparationReceipt performs a merge with any union data inside the PrepareOrSealWorkspaceView200JSONResponseBody, using the provided WorkspacePreparationReceipt
+func (t *PrepareOrSealWorkspaceView200JSONResponseBody) MergeWorkspacePreparationReceipt(v WorkspacePreparationReceipt) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsWorkspaceViewFacts returns the union data inside the PrepareOrSealWorkspaceView200JSONResponseBody as a WorkspaceViewFacts
+func (t PrepareOrSealWorkspaceView200JSONResponseBody) AsWorkspaceViewFacts() (WorkspaceViewFacts, error) {
+	var body WorkspaceViewFacts
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromWorkspaceViewFacts overwrites any union data inside the PrepareOrSealWorkspaceView200JSONResponseBody as the provided WorkspaceViewFacts
+func (t *PrepareOrSealWorkspaceView200JSONResponseBody) FromWorkspaceViewFacts(v WorkspaceViewFacts) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeWorkspaceViewFacts performs a merge with any union data inside the PrepareOrSealWorkspaceView200JSONResponseBody, using the provided WorkspaceViewFacts
+func (t *PrepareOrSealWorkspaceView200JSONResponseBody) MergeWorkspaceViewFacts(v WorkspaceViewFacts) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t PrepareOrSealWorkspaceView200JSONResponseBody) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *PrepareOrSealWorkspaceView200JSONResponseBody) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
 	return err
 }

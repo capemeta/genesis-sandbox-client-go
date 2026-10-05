@@ -52,6 +52,9 @@ func decodeJSONLimited(body io.Reader, target any) error {
 	if int64(len(data)) > maxJSONResponseBytes {
 		return fmt.Errorf("sandbox client: JSON response exceeds %d byte budget", maxJSONResponseBytes)
 	}
+	if err := validateJSONContract(data); err != nil {
+		return err
+	}
 	if err := json.Unmarshal(data, target); err != nil {
 		return fmt.Errorf("decode response: %w", err)
 	}
@@ -229,9 +232,6 @@ func (c *Client) request(ctx context.Context, method, path string, body any, res
 	}
 
 	maxAttempts := c.attemptsFor(method, true)
-	if method == http.MethodPost && requestHasIdempotencyKey(body) {
-		maxAttempts = c.cfg.MaxAttempts
-	}
 	delay := c.cfg.RetryBaseDelay
 	var lastErr error
 
@@ -276,10 +276,6 @@ func (c *Client) request(ctx context.Context, method, path string, body any, res
 			continue
 		}
 
-		if method == http.MethodDelete && resp.StatusCode == http.StatusNotFound {
-			_ = resp.Body.Close()
-			return nil
-		}
 		if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 			return decodeAPIError(resp)
 		}
@@ -300,25 +296,10 @@ func (c *Client) attemptsFor(method string, replayable bool) int {
 		return 1
 	}
 	switch method {
-	case http.MethodGet, http.MethodHead, http.MethodOptions, http.MethodPut, http.MethodDelete:
+	case http.MethodGet, http.MethodHead, http.MethodOptions:
 		return c.cfg.MaxAttempts
 	default:
 		return 1
-	}
-}
-
-func requestHasIdempotencyKey(body any) bool {
-	switch request := body.(type) {
-	case SubmitJobRequest:
-		return strings.TrimSpace(request.IdempotencyKey) != ""
-	case CreateSessionRequest:
-		return strings.TrimSpace(request.IdempotencyKey) != ""
-	case genapi.SubmitJobRequest:
-		return request.IdempotencyKey != nil && strings.TrimSpace(*request.IdempotencyKey) != ""
-	case genapi.CreateSessionRequest:
-		return request.IdempotencyKey != nil && strings.TrimSpace(*request.IdempotencyKey) != ""
-	default:
-		return false
 	}
 }
 
@@ -563,6 +544,9 @@ func (c *Client) JobLogs(ctx context.Context, jobID string, cursor int) (io.Read
 }
 
 func (c *Client) ExecSession(ctx context.Context, sandboxID string, req ExecSessionRequest) (*ExecSessionResult, error) {
+	if req.TrustedGovernance != nil {
+		return nil, fmt.Errorf("governed execution requires the async session endpoint")
+	}
 	var result genapi.ExecSessionResult
 	path := fmt.Sprintf("/v1/sandboxes/%s/sessions", url.PathEscape(sandboxID))
 	if err := c.request(ctx, http.MethodPost, path, toGenExecSessionRequest(req), &result); err != nil {
@@ -572,6 +556,9 @@ func (c *Client) ExecSession(ctx context.Context, sandboxID string, req ExecSess
 }
 
 func (c *Client) CreateWorkspace(ctx context.Context, req CreateWorkspaceRequest) (*Workspace, error) {
+	if err := validateWorkspaceBindingRequest(req); err != nil {
+		return nil, err
+	}
 	var workspace genapi.Workspace
 	if err := c.request(ctx, http.MethodPost, "/v1/workspaces", toGenCreateWorkspaceRequest(req), &workspace); err != nil {
 		return nil, err
@@ -602,16 +589,50 @@ func (c *Client) CreateSession(ctx context.Context, req CreateSessionRequest) (*
 	if err := c.request(ctx, http.MethodPost, "/v1/sessions", toGenCreateSessionRequest(req), &session); err != nil {
 		return nil, err
 	}
-	if len(req.Env) > 0 {
-		sessionID := derefString(session.SessionId)
-		if _, err := c.PatchSessionContext(ctx, sessionID, SessionContext{Env: req.Env}); err != nil {
-			if cleanupErr := c.cleanupSessionCreateFailure(sessionID); cleanupErr != nil {
-				return nil, fmt.Errorf("apply session env: %w (cleanup session %s: %v)", err, sessionID, cleanupErr)
-			}
-			return nil, fmt.Errorf("apply session env: %w", err)
-		}
+	return fromGenSession(session), nil
+}
+
+// LookupSession finds a session by its creation idempotency key (scoped to the
+// authenticated tenant/user). Returns ErrSessionNotFound-shaped APIError(404) when absent.
+func (c *Client) LookupSession(ctx context.Context, idempotencyKey string) (*Session, error) {
+	if err := validateLookupKey(idempotencyKey, 128); err != nil {
+		return nil, err
+	}
+	var session genapi.Session
+	path := "/v1/sessions:lookup?idempotency_key=" + url.QueryEscape(idempotencyKey)
+	if err := c.request(ctx, http.MethodGet, path, nil, &session); err != nil {
+		return nil, err
+	}
+	return validateSessionLookup(fromGenSession(session), idempotencyKey)
+}
+
+// ResumeSession recreates or validates the runtime for an active logical session.
+func (c *Client) ResumeSession(ctx context.Context, sessionID string) (*Session, error) {
+	if sessionID == "" {
+		return nil, errors.New("sandbox client: session id cannot be empty")
+	}
+	var session genapi.Session
+	path := fmt.Sprintf("/v1/sessions/%s:resume", url.PathEscape(sessionID))
+	if err := c.request(ctx, http.MethodPost, path, nil, &session); err != nil {
+		return nil, err
 	}
 	return fromGenSession(session), nil
+}
+
+// GetExecByOperation finds an exec by its stable caller operation_id within the session.
+func (c *Client) GetExecByOperation(ctx context.Context, sessionID, operationID string) (*ExecRecord, error) {
+	if sessionID == "" || operationID == "" {
+		return nil, errors.New("sandbox client: session id and operation id cannot be empty")
+	}
+	if err := validateLookupKey(operationID, 256); err != nil {
+		return nil, err
+	}
+	var record genapi.ExecRecord
+	path := fmt.Sprintf("/v1/sessions/%s/execs:lookup?operation_id=%s", url.PathEscape(sessionID), url.QueryEscape(operationID))
+	if err := c.request(ctx, http.MethodGet, path, nil, &record); err != nil {
+		return nil, err
+	}
+	return checkedExecReceipt(fromGenExecRecord(record), sessionID, "", operationID)
 }
 
 func (c *Client) GetSession(ctx context.Context, sessionID string) (*Session, error) {
@@ -668,6 +689,9 @@ func (c *Client) RenewSession(ctx context.Context, sessionID string, extendSecon
 }
 
 func (c *Client) ExecNamedSession(ctx context.Context, sessionID string, req ExecSessionRequest) (*ExecSessionResult, error) {
+	if req.TrustedGovernance != nil {
+		return nil, fmt.Errorf("governed execution requires the async session endpoint")
+	}
 	var result genapi.ExecSessionResult
 	if err := c.request(ctx, http.MethodPost, fmt.Sprintf("/v1/sessions/%s/exec", url.PathEscape(sessionID)), toGenExecSessionRequest(req), &result); err != nil {
 		return nil, err
@@ -708,9 +732,8 @@ func (c *Client) StreamExecLogs(ctx context.Context, sessionID, execID string, c
 }
 
 // CancelExec cancels a running or queued async exec.
-func (c *Client) CancelExec(ctx context.Context, sessionID, execID string) error {
-	path := fmt.Sprintf("/v1/sessions/%s/execs/%s:cancel", url.PathEscape(sessionID), url.PathEscape(execID))
-	return c.request(ctx, http.MethodPost, path, nil, nil)
+func (c *Client) CancelExec(ctx context.Context, sessionID, execID string) (*ExecRecord, error) {
+	return c.cancelExecReceipt(ctx, sessionID, execID)
 }
 
 // GetSessionContext retrieves the session-level cwd and env.
@@ -923,7 +946,7 @@ func (c *Client) RemoveSessionFile(ctx context.Context, sessionID, workspacePath
 	query := url.Values{}
 	query.Set("path", workspacePath)
 	query.Set("recursive", strconv.FormatBool(recursive))
-	return c.request(ctx, http.MethodDelete, sessionFilePath(sessionID, "files", query), nil, nil)
+	return c.removeWorkspacePath(ctx, sessionFilePath(sessionID, "files", query))
 }
 
 func (c *Client) BuildDependencies(ctx context.Context, req BuildDependencyRequest) (*DependencyBuild, error) {
@@ -1072,6 +1095,9 @@ func (c *Client) ListAuditEvents(ctx context.Context, query AuditQuery) (*AuditE
 }
 
 func (c *Client) ListSessionExecs(ctx context.Context, sessionID string, query ExecListQuery) (*ExecRecordList, error) {
+	if err := validateExecPageRequest(sessionID, query); err != nil {
+		return nil, err
+	}
 	values := url.Values{}
 	if query.Limit > 0 {
 		values.Set("limit", strconv.Itoa(query.Limit))
@@ -1087,7 +1113,7 @@ func (c *Client) ListSessionExecs(ctx context.Context, sessionID string, query E
 	if err := c.request(ctx, http.MethodGet, path, nil, &result); err != nil {
 		return nil, err
 	}
-	return fromGenExecRecordList(result), nil
+	return validateExecPage(fromGenExecRecordList(result), sessionID, query)
 }
 
 func toRawSandboxMetadataPatch(metadata SandboxMetadataPatch) map[string]any {
